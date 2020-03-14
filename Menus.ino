@@ -1,3 +1,29 @@
+// true == up, false == down
+void operateMenu(bool direction)
+{
+  if (menumode) {
+    if (direction) {
+      current_menu +=1;
+      if (current_menu > 9) current_menu=9;
+    }
+    else {
+      current_menu -=1;
+      if (current_menu < 0) current_menu=0;
+    }
+  }  
+  else {
+    if (direction) {
+      current_band +=1;
+      if (current_band > 7) current_band = 7;
+      cnt = 0;      // Reset counter
+    }
+    else {
+      current_band -=1;
+      if (current_band < 0) current_band = 0;
+      cnt = 0;      // Reset counter
+    }
+  }
+}
 
 /*****************************************************************************
 *          R E A D   B U T T O N S   A N D   D I S P L A Y    M E N U   
@@ -7,6 +33,15 @@
 */
 void readButtons() 
 {
+
+  bool menu_up_pressed = (button_MENU_UP.update() && button_MENU_UP.rose());  
+  bool menu_down_pressed = (button_MENU_DOWN.update() && button_MENU_DOWN.rose());
+
+  if(menu_down_pressed)
+    operateMenu(false);
+  else if(menu_up_pressed)
+    operateMenu(true);
+
 // Get button states  
   bool menu_pressed = (button_MENU.update() && button_MENU.rose());  
   bool select_pressed = (button_SELECT.update() && button_SELECT.rose());

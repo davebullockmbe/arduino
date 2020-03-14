@@ -52,6 +52,8 @@ const byte LCD_DB7_PIN = 6;
 // Button pins
 const byte BTN_MENU   = A2;
 const byte BTN_SELECT = A3;
+const byte BTN_MENU_UP = 2;
+const byte BTN_MENU_DOWN = 4;
 const byte BUTTON_DEBOUNCE_MS = 5;      // Button debounce time in ms.
 
 // Encoder pins
@@ -116,6 +118,8 @@ const float MV_DB_SLOPE         = 0.0210;        // Slope of AD8317 characterist
 LiquidCrystal lcd(LCD_RS_PIN, LCD_RW_PIN, LCD_E_PIN, LCD_DB4_PIN, LCD_DB5_PIN, LCD_DB6_PIN, LCD_DB7_PIN); // LCD driver
 Bounce button_MENU = Bounce();      // Button driver for MENU button
 Bounce button_SELECT = Bounce();    // Button driver for SELECT button
+Bounce button_MENU_UP = Bounce();
+Bounce button_MENU_DOWN = Bounce();
 
 
 // Measured and calculated values
@@ -174,7 +178,6 @@ void setup()
   LCDsetgfx();                  // Set-up graphical part
   pinMode(encoderPinA, INPUT);
   pinMode(encoderPinB, INPUT);
-  attachInterrupt(digitalPinToInterrupt(encoderPinA), doEncoder, FALLING);
   initButtons();
   getSettingsFromEEPROM();
   mergeCalibrationData();
@@ -221,37 +224,6 @@ void loop()
   readButtons();            // Read buttons   
 }
 
-/*****************************************************************************
-*                          E N C O D E R   R O U T I N E  
-******************************************************************************
-*/
-void doEncoder()            // Menu select
-{
-  // determine direction
-  CW = (digitalRead(encoderPinA) != digitalRead(encoderPinB)); 
-  if (menumode) {
-    if (CW) {
-      current_menu +=1;
-      if (current_menu > 9) current_menu=9;
-    }
-    else {
-      current_menu -=1;
-      if (current_menu < 0) current_menu=0;
-    }
-  }  
-  else {
-    if (CW) {
-      current_band +=1;
-      if (current_band > 7) current_band = 7;
-      cnt = 0;      // Reset counter
-    }
-    else {
-      current_band -=1;
-      if (current_band < 0) current_band = 0;
-      cnt = 0;      // Reset counter
-    }
-  }    
-}
 
 /*****************************************************************************
 *                            T A K E   S A M P L E S   
@@ -670,14 +642,22 @@ float currentError()
 void initButtons() 
 {
   // Set button pins as input.  
-  pinMode(BTN_MENU ,INPUT);
-  pinMode(BTN_SELECT ,INPUT);
+  pinMode(BTN_MENU, INPUT);
+  pinMode(BTN_SELECT, INPUT);
+  pinMode(BTN_MENU_UP, INPUT);
+  pinMode(BTN_MENU_DOWN, INPUT);
+
   // Attach pins to Bounce
   button_MENU.attach(BTN_MENU);
   button_SELECT.attach(BTN_SELECT);
+  button_MENU_UP.attach(BTN_MENU_UP);
+  button_MENU_DOWN.attach(BTN_MENU_DOWN);
+
   // Set bounce interval
   button_MENU.interval(BUTTON_DEBOUNCE_MS);
   button_SELECT.interval(BUTTON_DEBOUNCE_MS);
+  button_MENU_UP.interval(BUTTON_DEBOUNCE_MS);
+  button_MENU_DOWN.interval(BUTTON_DEBOUNCE_MS);
 }
 
 
