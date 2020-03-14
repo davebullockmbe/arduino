@@ -1,0 +1,8 @@
+{
+    "board": "arduino:avr:nano",
+    "path": "C:/Program Files (x86)/Arduino",
+    "sketch": "AD8317_mWmeter.ino",
+    "port": "COM6",
+    "output": "build",
+    "configuration": "cpu=atmega328old"
+}
