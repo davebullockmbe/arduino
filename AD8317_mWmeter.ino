@@ -173,7 +173,8 @@ void setup()
   lcd.begin(24, 2);             // 24 characters, 2 lines
   LCDsetgfx();                  // Set-up graphical part
   pinMode(encoderPinA, INPUT);
-  attachInterrupt(0, doEncoder, FALLING);
+  pinMode(encoderPinB, INPUT);
+  attachInterrupt(digitalPinToInterrupt(encoderPinA), doEncoder, FALLING);
   initButtons();
   getSettingsFromEEPROM();
   mergeCalibrationData();
