@@ -37,7 +37,7 @@
 /*------( Declare objects )------*/
 
 // Forward declaration
-int analogReadFast(byte ADCpin, byte prescalerBits=4);
+int analogReadFast(byte ADCpin, byte prescalerBits);
 
 
 // Constant declarations
