@@ -421,7 +421,7 @@ void displayCalibrationSavedNotification()
 void displaySplashScreen() 
 {
   lcd.home();
-  lcd.print(F(" PA0RWE  RF Power Meter "));
+  lcd.print(F(" DAVE'S  RF Power Meter "));
   lcd.setCursor(0, 1);
   lcd.print(F("  V.1.0   1MHZ - 10GHz  "));
   delay(2000);
