@@ -1,12 +1,14 @@
-//dual-power-meter-AD8318-V1.ino
+// Dual-power-meter-AD8318-V1.ino
 // by Reinhardt Weber, DC5ZM + AI6PK
 
-// ############################### When pressung key hold down key for a second ########################
-// =====================================================================================================
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "LiquidCrystal.h"
 #include "Bounce2.h"
+
+// ----------------------------------------
+// Configuration Zone
+
 
 // KEY PINS
 #define SELECT_PIN 11
@@ -18,22 +20,25 @@
 // Button debounce time in ms.
 const byte BUTTON_DEBOUNCE_MS = 5;
 
+// allocate arduino pins to LCD pins(rs,enable,DB4,DB5,DB6,DB7)
+LiquidCrystal lcd(12, 10, 8, 5, 7, 6); 
+
+
+// END Configuration Zone
+// ----------------------------------------
+
+
+
 Bounce button_SELECT = Bounce();
 Bounce button_UP = Bounce();
 Bounce button_DOWN = Bounce();
 Bounce button_LEFT = Bounce();
 Bounce button_RIGHT = Bounce();
 
-//-------------------------------------- custom chacters made using   https://omerk.github.io/lcdchargen
+// custom chacters made using   https://omerk.github.io/lcdchargen
 
-byte char_up_down[8] = {0b00100, 0b01010, 0b10001, 0b00000, 0b10001, 0b01010,
-						0b00100, 0b00000};
-
-byte char_left_right[8] = {0b10000, 0b01000, 0b00100, 0b01001, 0b10010, 0b00100,
-						   0b00010, 0b00001};
-
-
-LiquidCrystal lcd(12, 10, 8, 5, 7, 6); //allocate arduino pins to LCD pins(rs,enable,DB4,DB5,DB6,DB7)
+byte char_up_down[8] = {0b00100, 0b01010, 0b10001, 0b00000, 0b10001, 0b01010, 0b00100, 0b00000};
+byte char_left_right[8] = {0b10000, 0b01000, 0b00100, 0b01001, 0b10010, 0b00100, 0b00010, 0b00001};
 
 byte freq_curve_nr, freq_curve_nr_prev, iii, key_voltage, KEY, display_menue_nr = 1;
 byte att_CH1, att_CH1_prev, att_CH2 = 0, att_CH2_prev;
@@ -45,13 +50,14 @@ float f_ghz, mmm, ccc;
 float voltage_CH_1, level_CH_1, power_W_1, Return_Loss, RL_linear, SWR;
 float voltage_CH_2, level_CH_2, power_W_2;
 
-// ============================================================================================= SETUP()
+
 void setup()
 {
 	initButtons();
 
 	lcd.begin(16, 2);
-	analogReference(DEFAULT); // +5V
+	// +5V
+	analogReference(DEFAULT); 
 
 	lcd.createChar(0, char_up_down);
 	lcd.createChar(1, char_left_right);
@@ -74,11 +80,11 @@ void setup()
 void initButtons()
 {
 	// Set button pins as input.
-	pinMode(SELECT_PIN, INPUT);
-	pinMode(UP_PIN, INPUT);
-	pinMode(DOWN_PIN, INPUT);
-	pinMode(LEFT_PIN, INPUT);
-	pinMode(RIGHT_PIN, INPUT);
+	pinMode(SELECT_PIN, INPUT_PULLUP);
+	pinMode(UP_PIN, INPUT_PULLUP);
+	pinMode(DOWN_PIN, INPUT_PULLUP);
+	pinMode(LEFT_PIN, INPUT_PULLUP);
+	pinMode(RIGHT_PIN, INPUT_PULLUP);
 
 	// Attach pins to Bounce
 	button_SELECT.attach(SELECT_PIN);
@@ -95,7 +101,6 @@ void initButtons()
 	button_RIGHT.interval(BUTTON_DEBOUNCE_MS);
 }
 
-// ============================================================================================== LOOP()
 void loop()
 {
 	if (display_menue_nr == 1)
