@@ -1,5 +1,6 @@
 // Dual-power-meter-AD8318-V1.ino
 // by Reinhardt Weber, DC5ZM + AI6PK
+// Refactored by Andrew Bullock
 
 #include <Arduino.h>
 #include <EEPROM.h>
@@ -67,13 +68,15 @@ void setup()
 	lcd.setCursor(0, 1);
 	lcd.print(" 1 MHz -> 8 GHz ");
 	delay(1000);
+	
 	lcd.setCursor(0, 1);
 	lcd.print("(c)2019 by DC5ZM");
-	delay(1000);
 
 	freq_curve_nr = EEPROM.read(0);
 	att_CH1 = EEPROM.read(1);
 	att_CH2 = EEPROM.read(2);
+
+	delay(1000);
 	lcd.clear();
 }
 
@@ -105,27 +108,25 @@ void loop()
 {
 	if (display_menue_nr == 1)
 	{
-		select_menue();				// on LCD-Keypad-Shield
+		selectMenu();				// on LCD-Keypad-Shield
 		select_attenuator_CH_1();	// total attenuation
-		select_calibration_curve(); // corresponding to AD8318 data sheet
+		selectCalibrationCurve(); // corresponding to AD8318 data sheet
 
 		read_output_CH_1();		// of module AD8318
 		calculate_power_CH_1(); // of measurements
 		display_power_CH_1();	// on LCD-Keypad-Shield
 	}
-
-	if (display_menue_nr == 2)
+	else if (display_menue_nr == 2)
 	{
-		select_menue();				// on LCD-Keypad-Shield
+		selectMenu();				// on LCD-Keypad-Shield
 		select_attenuator_CH_2();	// on input SMA socket
-		select_calibration_curve(); // based on AD8318 data sheet
+		selectCalibrationCurve(); // based on AD8318 data sheet
 
 		read_output_CH_2();		// of module AD8318
 		calculate_power_CH_2(); // of measurements
 		display_power_CH_2();	// on LCD-Keypad-Shield
 	}
-
-	if (display_menue_nr == 3)
+	else if (display_menue_nr == 3)
 	{
 		read_output_CH_1();		// of module AD8318
 		calculate_power_CH_1(); // of measurements
@@ -134,12 +135,12 @@ void loop()
 		calculate_power_CH_2(); // of measurements
 		calculate_ReturnLoss_and_SWR();
 		display_ReturnLoss_and_SWR(); // on LCD-Keypad-Shield
-		select_menue();				  // on LCD-Keypad-Shield
+		selectMenu();				  // on LCD-Keypad-Shield
 	}
 }
 
-// =========================================================================================== MENUE 1+2
-void select_menue()
+
+void selectMenu()
 {
 	bool selectPressed = (button_SELECT.update() && button_SELECT.fell());
 	
@@ -155,50 +156,68 @@ void select_menue()
 }
 
 
-void select_calibration_curve()
+void selectCalibrationCurve()
 {
 	bool leftPressed = (button_LEFT.update() && button_LEFT.fell());
 	bool rightPressed = (button_RIGHT.update() && button_RIGHT.fell());
 
 	if (leftPressed)
-		freq_curve_nr--; // freq_curve_nr = counter index, decrement
+		freq_curve_nr--;
 	else if (rightPressed)
-		freq_curve_nr++; // increment counter index
+		freq_curve_nr++;
 
 	// handle over/underflow of counter index
 	freq_curve_nr = freq_curve_nr > 6 ? 6 : freq_curve_nr < 1 ? 1 : freq_curve_nr;
 
-	if (freq_curve_nr == 1)
-	{
-		f_ghz = 0.9;
-		AD8318_use_curve_0ghz9();
-	} 
-	else if (freq_curve_nr == 2)
-	{
-		f_ghz = 1.9;
-		AD8318_use_curve_1ghz9();
-	}
-	else if (freq_curve_nr == 3)
-	{
-		f_ghz = 2.2;
-		AD8318_use_curve_2ghz2();
-	}
-	else if (freq_curve_nr == 4)
-	{
-		f_ghz = 3.6;
-		AD8318_use_curve_3ghz6();
-	}
-	else if (freq_curve_nr == 5)
-	{
-		f_ghz = 5.8;
-		AD8318_use_curve_5ghz8();
-	}
-	else if (freq_curve_nr == 6)
-	{
-		f_ghz = 8.0;
-		AD8318_use_curve_8ghz0();
-	}
+	// mmm = slope for straight line equation
+	// ccc = intercept y-axis
+	// error_limit_LOW/HIGH = dBm limits for acceptable error range
 
+	switch(freq_curve_nr){
+		case 1:
+			f_ghz = 0.9;
+			mmm = 0.025;
+			ccc = 0.56;
+			error_limit_LOW = -55; 
+			error_limit_HIGH = -1;
+			break;
+		case 2:
+			f_ghz = 1.9;
+			mmm = 0.025;
+			ccc = 0.45;
+			error_limit_LOW = -68;
+			error_limit_HIGH = -5;
+			break;
+		case 3:
+			f_ghz = 2.2;
+			mmm = 0.025;
+			ccc = 0.45;
+			error_limit_LOW = -60;
+			error_limit_HIGH = -4;
+			break;
+		case 4:
+			f_ghz = 3.6;
+			mmm = 0.025;
+			ccc = 0.5;
+			error_limit_LOW = -52;
+			error_limit_HIGH = -3;
+			break;
+		case 5:
+			f_ghz = 5.8;
+			mmm = 0.025;
+			ccc = 0.63;
+			error_limit_LOW = -56;
+			error_limit_HIGH = 0;
+			break;
+		case 6:
+			f_ghz = 8.0;
+			mmm = 0.025;
+			ccc = 0.77;
+			error_limit_LOW = -54;
+			error_limit_HIGH = 0;
+			break;
+	}
+	
 	if (freq_curve_nr_prev != freq_curve_nr) 
 	{
 		EEPROM.write(0, freq_curve_nr); 
@@ -219,8 +238,9 @@ void select_attenuator_CH_1()
 			att_CH1++;		
 		
 		// byte att_CH1 will self-cycle around from 255->0 and 0->255
-
-		dtostrf(att_CH1, 2, 0, float_string); // format number to 2 digits, no nr. behind the dec.point
+		
+		// format number to 2 digits, no nr. behind the dec.point
+		dtostrf(att_CH1, 2, 0, float_string); 
 		lcd.setCursor(11, 0);
 		lcd.print(float_string);
 	}
@@ -257,8 +277,8 @@ void calculate_power_CH_1()
 
 void display_power_CH_1()
 {
-	lcd.setCursor(0, 0);					 // go to line #1
-	dtostrf(level_CH_1, 3, 0, float_string); //convert float to string
+	lcd.setCursor(0, 0);
+	dtostrf(level_CH_1, 3, 0, float_string);
 	lcd.print("1L");
 	lcd.print(float_string);
 	lcd.print("dBm ");
@@ -290,62 +310,13 @@ void display_power_CH_1()
 	}
 }
 
-void AD8318_use_curve_0ghz9()
-{
-	mmm = 0.025; // values for straight line equation: mmm = slope
-	ccc = 0.56;	 // ccc = intercept y-axis
-
-	error_limit_LOW = -55; // dBm limits for acceptable error range
-	error_limit_HIGH = -1;
-}
-
-void AD8318_use_curve_1ghz9()
-{
-	mmm = 0.025;
-	ccc = 0.45;
-	error_limit_LOW = -68;
-	error_limit_HIGH = -5;
-}
-
-void AD8318_use_curve_2ghz2()
-{
-	mmm = 0.025;
-	ccc = 0.45;
-	error_limit_LOW = -60;
-	error_limit_HIGH = -4;
-}
-
-void AD8318_use_curve_3ghz6()
-{
-	mmm = 0.025;
-	ccc = 0.5;
-	error_limit_LOW = -52;
-	error_limit_HIGH = -3;
-}
-
-void AD8318_use_curve_5ghz8()
-{
-	mmm = 0.025;
-	ccc = 0.63;
-	error_limit_LOW = -56;
-	error_limit_HIGH = 0;
-}
-
-void AD8318_use_curve_8ghz0()
-{
-	mmm = 0.025;
-	ccc = 0.77;
-	error_limit_LOW = -54;
-	error_limit_HIGH = 0;
-}
-
 void select_subunit_of_power_CH_1() 
 {
 	// select unit: W, mW, µW, nW
 
 	if (level_CH_1 < -30)
 	{
-		dtostrf(power_W_1 * 1000000, 4, 0, float_string); // convert float to string
+		dtostrf(power_W_1 * 1000000, 4, 0, float_string);
 		lcd.print(float_string);
 		lcd.print("nW ");
 	}
@@ -396,7 +367,7 @@ void select_attenuator_CH_2()
 		else if (upPressed)
 			att_CH2++;
 
-		dtostrf(att_CH2, 2, 0, float_string); // format number to 2 digits, no nr. behind the dec.point
+		dtostrf(att_CH2, 2, 0, float_string);
 		lcd.setCursor(11, 0);
 		lcd.print(float_string);
 	}
@@ -410,8 +381,7 @@ void select_attenuator_CH_2()
 
 void read_output_CH_2()
 {
-	voltage_CH_2 = 0; // read value 1 time
-	// calculate average value of 10 readings
+	voltage_CH_2 = 0;
 	for (iii = 0; iii < 10; iii++)
 		voltage_CH_2 = voltage_CH_2 + analogRead(A2);
 	
@@ -444,7 +414,7 @@ void display_power_CH_2()
 	lcd.print("dB");
 	lcd.write(byte(0)); // custom made char_up_down
 
-	lcd.setCursor(0, 1); // go to line #2
+	lcd.setCursor(0, 1);
 	lcd.print("2P");
 	select_subunit_of_power_CH_2();
 
@@ -469,7 +439,7 @@ void select_subunit_of_power_CH_2()
 	// select unit: W, mW, µW, nW
 	if (level_CH_2 < -30)
 	{
-		dtostrf(power_W_2 * 1000000, 4, 0, float_string); //convert float to string
+		dtostrf(power_W_2 * 1000000, 4, 0, float_string);
 		lcd.print(float_string);
 		lcd.print("nW ");
 	}
@@ -514,9 +484,9 @@ void calculate_ReturnLoss_and_SWR()
 	if (level_CH_1 < level_CH_2)
 	{
 		lcd.clear();
-		lcd.print("!Level  CH2 >CH1");
+		lcd.print("!Level CH2 > CH1");
 		lcd.setCursor(0, 1);
-		lcd.print("Change  Channels");
+		lcd.print("Reverse channels");
 		delay(500);
 	}
 
