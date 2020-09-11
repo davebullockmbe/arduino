@@ -8,21 +8,21 @@
 #include "LiquidCrystal.h"
 #include "Bounce2.h"
 
-// KEY PINs
-#define SELECT_PIN 13
+// KEY PINS
+#define SELECT_PIN 11
 #define UP_PIN 5
 #define DOWN_PIN 4
 #define LEFT_PIN 3
 #define RIGHT_PIN 2
+
+// Button debounce time in ms.
+const byte BUTTON_DEBOUNCE_MS = 5;
 
 Bounce button_SELECT = Bounce();
 Bounce button_UP = Bounce();
 Bounce button_DOWN = Bounce();
 Bounce button_LEFT = Bounce();
 Bounce button_RIGHT = Bounce();
-
-// Button debounce time in ms.
-const byte BUTTON_DEBOUNCE_MS = 5; 
 
 //-------------------------------------- custom chacters made using   https://omerk.github.io/lcdchargen
 
@@ -31,8 +31,9 @@ byte char_up_down[8] = {0b00100, 0b01010, 0b10001, 0b00000, 0b10001, 0b01010,
 
 byte char_left_right[8] = {0b10000, 0b01000, 0b00100, 0b01001, 0b10010, 0b00100,
 						   0b00010, 0b00001};
-// -----------------------------------------------------------------------------------------------------
-LiquidCrystal lcd(12, 14, 8, 5, 7, 6); //allocate arduino pins to LCD pins(rs,enable,DB4,DB5,DB6,DB7)
+
+
+LiquidCrystal lcd(12, 10, 8, 5, 7, 6); //allocate arduino pins to LCD pins(rs,enable,DB4,DB5,DB6,DB7)
 
 byte freq_curve_nr, freq_curve_nr_prev, iii, key_voltage, KEY, display_menue_nr = 1;
 byte att_CH1, att_CH1_prev, att_CH2 = 0, att_CH2_prev;
