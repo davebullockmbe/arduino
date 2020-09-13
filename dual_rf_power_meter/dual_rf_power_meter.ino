@@ -38,6 +38,8 @@ Bounce button_RIGHT = Bounce();
 
 // custom chacters made using   https://omerk.github.io/lcdchargen
 
+#define CHAR_UPDOWN 0
+#define CHAR_LEFTRIGHT 1
 byte char_up_down[8] = {0b00100, 0b01010, 0b10001, 0b00000, 0b10001, 0b01010, 0b00100, 0b00000};
 byte char_left_right[8] = {0b10000, 0b01000, 0b00100, 0b01001, 0b10010, 0b00100, 0b00010, 0b00001};
 
@@ -60,15 +62,15 @@ void setup()
 	// +5V
 	analogReference(DEFAULT); 
 
-	lcd.createChar(0, char_up_down);
-	lcd.createChar(1, char_left_right);
+	lcd.createChar(CHAR_UPDOWN, char_up_down);
+	lcd.createChar(CHAR_LEFTRIGHT, char_left_right);
 
 	lcd.clear();
 	lcd.print("DUAL POWER-METER");
 	lcd.setCursor(0, 1);
 	lcd.print(" 1 MHz -> 8 GHz ");
 	delay(1000);
-	
+
 	lcd.setCursor(0, 1);
 	lcd.print("(c)2019 by DC5ZM");
 
@@ -287,7 +289,7 @@ void display_power_CH_1()
 	dtostrf(att_CH1, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
-	lcd.write(byte(0)); // custom made char_up_down
+	lcd.write(byte(CHAR_UPDOWN));
 	
 	// go to line #2
 	lcd.setCursor(0, 1); 
@@ -297,7 +299,7 @@ void display_power_CH_1()
 	dtostrf(f_ghz, 3, 1, float_string);
 	lcd.print(float_string);
 	lcd.print("GHz");
-	lcd.write(byte(1)); // custom made char_left_right
+	lcd.write(byte(CHAR_LEFTRIGHT));
 
 	if ((level_CH_1 - att_CH1) < error_limit_LOW || (level_CH_1 - att_CH1) > error_limit_HIGH)
 	{
@@ -402,8 +404,8 @@ void calculate_power_CH_2()
 
 void display_power_CH_2()
 {
-	lcd.setCursor(0, 0);					 // go to line #1
-	dtostrf(level_CH_2, 3, 0, float_string); //convert float to string
+	lcd.setCursor(0, 0);
+	dtostrf(level_CH_2, 3, 0, float_string);
 	lcd.print("2L");
 	lcd.print(float_string);
 	lcd.print("dBm ");
@@ -412,7 +414,7 @@ void display_power_CH_2()
 	dtostrf(att_CH2, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
-	lcd.write(byte(0)); // custom made char_up_down
+	lcd.write(byte(CHAR_UPDOWN));
 
 	lcd.setCursor(0, 1);
 	lcd.print("2P");
@@ -421,7 +423,7 @@ void display_power_CH_2()
 	dtostrf(f_ghz, 3, 1, float_string);
 	lcd.print(float_string);
 	lcd.print("GHz");
-	lcd.write(byte(1)); // custom made char_left_right
+	lcd.write(byte(CHAR_LEFTRIGHT));
 
 	if ((level_CH_2 - att_CH2) < error_limit_LOW || (level_CH_2 - att_CH2) > error_limit_HIGH)
 	{
@@ -484,7 +486,7 @@ void calculate_ReturnLoss_and_SWR()
 	if (level_CH_1 < level_CH_2)
 	{
 		lcd.clear();
-		lcd.print("!Level CH2 > CH1");
+		lcd.print("CH2 Level > CH1 ");
 		lcd.setCursor(0, 1);
 		lcd.print("Reverse channels");
 		delay(500);
