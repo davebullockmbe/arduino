@@ -4,5 +4,5 @@
     "sketch": "dual_rf_power_meter.ino",
     "port": "COM6",
     "output": "build",
-    "configuration": "cpu=atmega328old"
+    "configuration": "cpu=atmega328"
 }

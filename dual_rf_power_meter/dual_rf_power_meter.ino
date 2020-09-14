@@ -10,6 +10,9 @@
 // ----------------------------------------
 // Configuration Zone
 
+// Channels
+#define CH1_PIN A1
+#define CH2_PIN A2
 
 // KEY PINS
 #define SELECT_PIN 11
@@ -22,7 +25,7 @@
 const byte BUTTON_DEBOUNCE_MS = 5;
 
 // allocate arduino pins to LCD pins(rs,enable,DB4,DB5,DB6,DB7)
-LiquidCrystal lcd(12, 10, 8, 5, 7, 6); 
+LiquidCrystal lcd(12, 10, 9, 8, 7, 6); 
 
 
 // END Configuration Zone
@@ -258,7 +261,7 @@ void read_output_CH_1()
 {
 	voltage_CH_1 = 0;
 	for (iii = 0; iii < 10; iii++)
-		voltage_CH_1 = voltage_CH_1 + analogRead(A1);
+		voltage_CH_1 = voltage_CH_1 + analogRead(CH1_PIN);
 
 	// calculate average value of 10 readings
 	// 2046 = 10*1023/5V
@@ -385,7 +388,7 @@ void read_output_CH_2()
 {
 	voltage_CH_2 = 0;
 	for (iii = 0; iii < 10; iii++)
-		voltage_CH_2 = voltage_CH_2 + analogRead(A2);
+		voltage_CH_2 = voltage_CH_2 + analogRead(CH2_PIN);
 	
 	// 2046 = 10*1023/5V
 	voltage_CH_2 = voltage_CH_2 / 2046; 
