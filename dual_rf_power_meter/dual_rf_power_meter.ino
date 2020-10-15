@@ -31,8 +31,6 @@ LiquidCrystal lcd(12, 10, 9, 8, 7, 6);
 // END Configuration Zone
 // ----------------------------------------
 
-
-
 Bounce button_SELECT = Bounce();
 Bounce button_UP = Bounce();
 Bounce button_DOWN = Bounce();
@@ -46,8 +44,9 @@ Bounce button_RIGHT = Bounce();
 byte char_up_down[8] = {0b00100, 0b01010, 0b10001, 0b00000, 0b10001, 0b01010, 0b00100, 0b00000};
 byte char_left_right[8] = {0b10000, 0b01000, 0b00100, 0b01001, 0b10010, 0b00100, 0b00010, 0b00001};
 
-byte freq_curve_nr, freq_curve_nr_prev, iii, key_voltage, KEY, display_menue_nr = 1;
-byte att_CH1, att_CH1_prev, att_CH2 = 0, att_CH2_prev;
+byte freq_curve_nr, freq_curve_nr_prev, iii, key_voltage, KEY, menuMode;
+byte att_CH1, att_CH1_prev, att_CH2, att_CH2_prev;
+byte att_calib_CH1, att_calib_CH1_prev, att_calib_CH2, att_calib_CH2_prev;
 
 char float_string[7];
 int error_limit_LOW, error_limit_HIGH;
@@ -59,15 +58,13 @@ float voltage_CH_2, level_CH_2, power_W_2;
 
 void setup()
 {
+	analogReference(DEFAULT);
+
 	initButtons();
 
 	lcd.begin(16, 2);
-	// +5V
-	analogReference(DEFAULT); 
-
 	lcd.createChar(CHAR_UPDOWN, char_up_down);
 	lcd.createChar(CHAR_LEFTRIGHT, char_left_right);
-
 	lcd.clear();
 	lcd.print("DUAL POWER-METER");
 	lcd.setCursor(0, 1);
@@ -75,14 +72,18 @@ void setup()
 	delay(1000);
 
 	lcd.setCursor(0, 1);
-	lcd.print("(c)2019 by DC5ZM");
+	lcd.print("G6UWO & Trullock");
 
 	freq_curve_nr = EEPROM.read(0);
 	att_CH1 = EEPROM.read(1);
 	att_CH2 = EEPROM.read(2);
-
+	att_calib_CH1 = EEPROM.read(3);
+	att_calib_CH2 = EEPROM.read(4);
+	
 	delay(1000);
 	lcd.clear();
+
+	menuMode = 1;
 }
 
 void initButtons()
@@ -111,53 +112,65 @@ void initButtons()
 
 void loop()
 {
-	if (display_menue_nr == 1)
+	if (menuMode == 1)
 	{
-		selectMenu();				// on LCD-Keypad-Shield
-		select_attenuator_CH_1();	// total attenuation
-		selectCalibrationCurve(); // corresponding to AD8318 data sheet
+		select_attenuator_CH_1();
+		selectCalibrationCurve();
 
-		read_output_CH_1();		// of module AD8318
-		calculate_power_CH_1(); // of measurements
-		display_power_CH_1();	// on LCD-Keypad-Shield
+		read_output_CH_1();
+		calculate_power_CH_1();
+		display_power_CH_1();
 	}
-	else if (display_menue_nr == 2)
+	else if (menuMode == 2)
 	{
-		selectMenu();				// on LCD-Keypad-Shield
-		select_attenuator_CH_2();	// on input SMA socket
-		selectCalibrationCurve(); // based on AD8318 data sheet
+		select_attenuator_CH_2();
+		selectCalibrationCurve();
 
-		read_output_CH_2();		// of module AD8318
-		calculate_power_CH_2(); // of measurements
-		display_power_CH_2();	// on LCD-Keypad-Shield
+		read_output_CH_2();
+		calculate_power_CH_2();
+		display_power_CH_2();
 	}
-	else if (display_menue_nr == 3)
+	else if (menuMode == 3)
 	{
-		read_output_CH_1();		// of module AD8318
-		calculate_power_CH_1(); // of measurements
-		read_output_CH_2();		// of module AD8318
+		read_output_CH_1();
+		calculate_power_CH_1();
 
-		calculate_power_CH_2(); // of measurements
+		read_output_CH_2();
+		calculate_power_CH_2();
+
 		calculate_ReturnLoss_and_SWR();
-		display_ReturnLoss_and_SWR(); // on LCD-Keypad-Shield
-		selectMenu();				  // on LCD-Keypad-Shield
+		display_ReturnLoss_and_SWR();
 	}
+	else if (menuMode == 4)
+	{
+		display_calibration_CH_1();
+	}
+	else if (menuMode == 5)
+	{
+		display_calibration_CH_2();
+	}
+
+	handleMenuChanged();
 }
 
 
-void selectMenu()
+void handleMenuChanged()
 {
 	bool selectPressed = (button_SELECT.update() && button_SELECT.fell());
 	
 	if (!selectPressed)
 		return;	
 	
-	if (display_menue_nr == 1)
-		display_menue_nr = 2;
-	else if (display_menue_nr == 2)
-		display_menue_nr = 3;
-	else if (display_menue_nr == 3)
-		display_menue_nr = 1;
+	if (menuMode == 1)
+		menuMode = 2;
+	else if (menuMode == 2)
+		menuMode = 3;
+	else if (menuMode == 3)
+		menuMode = 4;
+	else if(menuMode == 4)
+		menuMode = 5;
+	else
+		menuMode = 1;
 }
 
 
@@ -257,6 +270,33 @@ void select_attenuator_CH_1()
 	}
 }
 
+void select_attenuator_calibration_CH_1()
+{
+	bool upPressed = (button_UP.update() && button_UP.fell());
+	bool downPressed = (button_DOWN.update() && button_DOWN.fell());
+
+	if (downPressed || upPressed)
+	{
+		if (downPressed)
+			att_calib_CH1--;
+		else if (upPressed)
+			att_calib_CH1++;
+
+		// byte att_calib_CH1 will self-cycle around from 255->0 and 0->255
+
+		// format number to 2 digits, no nr. behind the dec.point
+		dtostrf(att_calib_CH1, 2, 0, float_string);
+		lcd.setCursor(11, 0);
+		lcd.print(float_string);
+	}
+
+	if (att_calib_CH1_prev != att_calib_CH1)
+	{
+		EEPROM.write(3, att_calib_CH1);
+		att_calib_CH1_prev = att_calib_CH1;
+	}
+}
+
 void read_output_CH_1()
 {
 	voltage_CH_1 = 0;
@@ -271,7 +311,7 @@ void read_output_CH_1()
 void calculate_power_CH_1() 
 {
 	// uses straight line equation: y = mmm*x + ccc -> x = (y - ccc)/mmm
-	level_CH_1 = -(voltage_CH_1 - ccc) / mmm + att_CH1;
+	level_CH_1 = -(voltage_CH_1 - ccc) / mmm + att_CH1 + att_calib_CH1;
 	
 	// round and convert to integer
 	level_CH_1 = floor(level_CH_1 + 0.5);
@@ -289,22 +329,21 @@ void display_power_CH_1()
 	lcd.print("dBm ");
 
 	lcd.print("AT");
-	dtostrf(att_CH1, 2, 0, float_string);
+	dtostrf(att_CH1 + att_calib_CH1, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
 	lcd.write(byte(CHAR_UPDOWN));
-	
-	// go to line #2
+		
 	lcd.setCursor(0, 1); 
 	lcd.print("1P");
-	select_subunit_of_power_CH_1();
+	print_subunit_of_power_CH_1();
 
 	dtostrf(f_ghz, 3, 1, float_string);
 	lcd.print(float_string);
 	lcd.print("GHz");
 	lcd.write(byte(CHAR_LEFTRIGHT));
 
-	if ((level_CH_1 - att_CH1) < error_limit_LOW || (level_CH_1 - att_CH1) > error_limit_HIGH)
+	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 - att_calib_CH1) > error_limit_HIGH)
 	{
 		delay(300);
 		lcd.setCursor(0, 0);
@@ -315,7 +354,31 @@ void display_power_CH_1()
 	}
 }
 
-void select_subunit_of_power_CH_1() 
+void display_calibration_CH_1()
+{
+	lcd.setCursor(0, 0);
+	lcd.print("Calibration CH1");
+
+	lcd.setCursor(0, 1);
+	dtostrf(att_calib_CH1, 2, 0, float_string);
+	lcd.print(float_string);
+	lcd.print("dB");
+	lcd.write(byte(CHAR_UPDOWN));
+}
+
+void display_calibration_CH_2()
+{
+	lcd.setCursor(0, 0);
+	lcd.print("Calibration CH2");
+
+	lcd.setCursor(0, 1);
+	dtostrf(att_calib_CH2, 2, 0, float_string);
+	lcd.print(float_string);
+	lcd.print("dB");
+	lcd.write(byte(CHAR_UPDOWN));
+}
+
+void print_subunit_of_power_CH_1() 
 {
 	// select unit: W, mW, µW, nW
 
@@ -359,7 +422,6 @@ void select_subunit_of_power_CH_1()
 	}
 }
 
-
 void select_attenuator_CH_2()
 {
 	bool upPressed = (button_UP.update() && button_UP.fell());
@@ -384,6 +446,30 @@ void select_attenuator_CH_2()
 	}
 }
 
+void select_attenuator_calibration_CH_2()
+{
+	bool upPressed = (button_UP.update() && button_UP.fell());
+	bool downPressed = (button_DOWN.update() && button_DOWN.fell());
+
+	if (upPressed || downPressed)
+	{
+		if (downPressed)
+			att_calib_CH2--;
+		else if (upPressed)
+			att_calib_CH2++;
+
+		dtostrf(att_calib_CH2, 2, 0, float_string);
+		lcd.setCursor(11, 0);
+		lcd.print(float_string);
+	}
+
+	if (att_calib_CH2_prev != att_calib_CH2)
+	{
+		EEPROM.write(4, att_calib_CH2);
+		att_calib_CH2_prev = att_calib_CH2;
+	}
+}
+
 void read_output_CH_2()
 {
 	voltage_CH_2 = 0;
@@ -398,7 +484,7 @@ void read_output_CH_2()
 void calculate_power_CH_2()
 {
 	// uses straight line equation: y = mmm*x + ccc -> x = (y - ccc)/mmm
-	level_CH_2 = -(voltage_CH_2 - ccc) / mmm + att_CH2;
+	level_CH_2 = -(voltage_CH_2 - ccc) / mmm + att_CH2 + att_calib_CH2;
 	// round and convert to integer
 	level_CH_2 = floor(level_CH_2 + 0.5);
 	// convert dBm to mW
@@ -414,7 +500,7 @@ void display_power_CH_2()
 	lcd.print("dBm ");
 
 	lcd.print("AT");
-	dtostrf(att_CH2, 2, 0, float_string);
+	dtostrf(att_CH2 + att_calib_CH2, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
 	lcd.write(byte(CHAR_UPDOWN));
@@ -522,14 +608,14 @@ void display_ReturnLoss_and_SWR()
 	dtostrf(SWR, 3, 1, float_string);
 	lcd.print(float_string);
 
-	if ((level_CH_1 - att_CH1) < error_limit_LOW || (level_CH_1 - att_CH1) > error_limit_HIGH)
+	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 - att_calib_CH1) > error_limit_HIGH)
 	{
 		delay(300);
 		lcd.setCursor(0, 0);
 		lcd.print(" ");
 	}
 
-	if ((level_CH_2 - att_CH2) < error_limit_LOW || (level_CH_2 - att_CH2) > error_limit_HIGH)
+	if ((level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 - att_calib_CH2) > error_limit_HIGH)
 	{
 		lcd.setCursor(0, 1);
 		lcd.print(" ");
