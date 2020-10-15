@@ -143,10 +143,12 @@ void loop()
 	}
 	else if (menuMode == 4)
 	{
+		select_attenuator_calibration_CH_1();
 		display_calibration_CH_1();
 	}
 	else if (menuMode == 5)
 	{
+		select_attenuator_calibration_CH_2();	
 		display_calibration_CH_2();
 	}
 
@@ -357,24 +359,26 @@ void display_power_CH_1()
 void display_calibration_CH_1()
 {
 	lcd.setCursor(0, 0);
-	lcd.print("Calibration CH1");
+	lcd.print("Calibration FWD ");
 
 	lcd.setCursor(0, 1);
 	dtostrf(att_calib_CH1, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
+	lcd.print("           ");
 	lcd.write(byte(CHAR_UPDOWN));
 }
 
 void display_calibration_CH_2()
 {
 	lcd.setCursor(0, 0);
-	lcd.print("Calibration CH2");
+	lcd.print("Calibration REV ");
 
 	lcd.setCursor(0, 1);
 	dtostrf(att_calib_CH2, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
+	lcd.print("           ");
 	lcd.write(byte(CHAR_UPDOWN));
 }
 

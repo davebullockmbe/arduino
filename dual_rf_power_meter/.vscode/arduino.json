@@ -2,7 +2,7 @@
     "board": "arduino:avr:nano",
     "path": "C:/Program Files (x86)/Arduino",
     "sketch": "dual_rf_power_meter.ino",
-    "port": "COM6",
+    "port": "COM5",
     "output": "build",
     "configuration": "cpu=atmega328"
 }
