@@ -313,7 +313,7 @@ void read_output_CH_1()
 void calculate_power_CH_1() 
 {
 	// uses straight line equation: y = mmm*x + ccc -> x = (y - ccc)/mmm
-	level_CH_1 = -(voltage_CH_1 - ccc) / mmm + att_CH1 - att_calib_CH1;
+	level_CH_1 = -(voltage_CH_1 - ccc) / mmm + att_CH1 + att_calib_CH1;
 	
 	// round and convert to integer
 	level_CH_1 = floor(level_CH_1 + 0.5);
@@ -330,7 +330,7 @@ void display_power_CH_1()
 	lcd.print(float_string);
 	lcd.print("dBm ");
 
-	lcd.print("AT");
+	lcd.print("@ ");
 	dtostrf(att_CH1, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
@@ -345,7 +345,7 @@ void display_power_CH_1()
 	lcd.print("GHz");
 	lcd.write(byte(CHAR_LEFTRIGHT));
 
-	if ((level_CH_1 - att_CH1 + att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 + att_calib_CH1) > error_limit_HIGH)
+	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 - att_calib_CH1) > error_limit_HIGH)
 	{
 		delay(300);
 		lcd.setCursor(0, 0);
@@ -359,28 +359,28 @@ void display_power_CH_1()
 void display_calibration_CH_1()
 {
 	lcd.setCursor(0, 0);
-	lcd.print("Calibration FWD ");
+	lcd.print("Coupling Ratio  ");
 
 	lcd.setCursor(0, 1);
-	lcd.print("-");
+	lcd.print("FWD -");
 	dtostrf(att_calib_CH1, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
-	lcd.print("          ");
+	lcd.print("      ");
 	lcd.write(byte(CHAR_UPDOWN));
 }
 
 void display_calibration_CH_2()
 {
 	lcd.setCursor(0, 0);
-	lcd.print("Calibration REV ");
+	lcd.print("Coupling Ratio  ");
 
 	lcd.setCursor(0, 1);
-	lcd.print("-");
+	lcd.print("REF -");
 	dtostrf(att_calib_CH2, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
-	lcd.print("          ");
+	lcd.print("      ");
 	lcd.write(byte(CHAR_UPDOWN));
 }
 
@@ -490,7 +490,7 @@ void read_output_CH_2()
 void calculate_power_CH_2()
 {
 	// uses straight line equation: y = mmm*x + ccc -> x = (y - ccc)/mmm
-	level_CH_2 = -(voltage_CH_2 - ccc) / mmm + att_CH2 - att_calib_CH2;
+	level_CH_2 = -(voltage_CH_2 - ccc) / mmm + att_CH2 + att_calib_CH2;
 	// round and convert to integer
 	level_CH_2 = floor(level_CH_2 + 0.5);
 	// convert dBm to mW
@@ -505,7 +505,7 @@ void display_power_CH_2()
 	lcd.print(float_string);
 	lcd.print("dBm ");
 
-	lcd.print("AT");
+	lcd.print("@ ");
 	dtostrf(att_CH2, 2, 0, float_string);
 	lcd.print(float_string);
 	lcd.print("dB");
@@ -520,7 +520,7 @@ void display_power_CH_2()
 	lcd.print("GHz");
 	lcd.write(byte(CHAR_LEFTRIGHT));
 
-	if ((level_CH_2 - att_CH2) < error_limit_LOW || (level_CH_2 - att_CH2) > error_limit_HIGH)
+	if ((level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 - att_calib_CH2) > error_limit_HIGH)
 	{
 		delay(300);
 		lcd.setCursor(0, 0);
@@ -614,14 +614,14 @@ void display_ReturnLoss_and_SWR()
 	dtostrf(SWR, 3, 1, float_string);
 	lcd.print(float_string);
 
-	if ((level_CH_1 - att_CH1 + att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 + att_calib_CH1) > error_limit_HIGH)
+	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 + att_calib_CH1) > error_limit_HIGH)
 	{
 		delay(300);
 		lcd.setCursor(0, 0);
 		lcd.print(" ");
 	}
 
-	if ((level_CH_2 - att_CH2 + att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 + att_calib_CH2) > error_limit_HIGH)
+	if ((level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 + att_calib_CH2) > error_limit_HIGH)
 	{
 		lcd.setCursor(0, 1);
 		lcd.print(" ");
