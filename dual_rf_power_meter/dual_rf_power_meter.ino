@@ -324,11 +324,21 @@ void calculate_power_CH_1()
 
 void display_power_CH_1()
 {
+	bool tooLow = (level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW;
+	bool tooHigh = (level_CH_1 - att_CH1 - att_calib_CH1) > error_limit_HIGH;
+
 	lcd.setCursor(0, 0);
-	dtostrf(level_CH_1, 3, 0, float_string);
-	lcd.print("1L");
-	lcd.print(float_string);
-	lcd.print("dBm ");
+	if(tooLow || tooHigh)
+	{
+		lcd.print("1I/P too ");
+	}
+	else
+	{
+		dtostrf(level_CH_1, 3, 0, float_string);
+		lcd.print("1L");
+		lcd.print(float_string);
+		lcd.print("dBm ");
+	}
 
 	lcd.print("@ ");
 	dtostrf(att_CH1, 2, 0, float_string);
@@ -337,23 +347,20 @@ void display_power_CH_1()
 	lcd.write(byte(CHAR_UPDOWN));
 		
 	lcd.setCursor(0, 1); 
-	lcd.print("1P");
-	print_subunit_of_power_CH_1();
+	
+	if(tooLow){
+		lcd.print("1 lo ")
+	} else if(tooHigh) {
+		lcd.print("1 hi ")
+	} else {
+		lcd.print("1P");
+		print_subunit_of_power_CH_1();
+	}
 
 	dtostrf(f_ghz, 3, 1, float_string);
 	lcd.print(float_string);
 	lcd.print("GHz");
 	lcd.write(byte(CHAR_LEFTRIGHT));
-
-	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 - att_calib_CH1) > error_limit_HIGH)
-	{
-		delay(300);
-		lcd.setCursor(0, 0);
-		lcd.print(" ");
-		lcd.setCursor(0, 1);
-		lcd.print(" ");
-		delay(300);
-	}
 }
 
 void display_calibration_CH_1()
@@ -499,11 +506,21 @@ void calculate_power_CH_2()
 
 void display_power_CH_2()
 {
+	bool tooLow = (level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW;
+	bool tooHigh = (level_CH_2 - att_CH2 - att_calib_CH2) > error_limit_HIGH;
+
 	lcd.setCursor(0, 0);
-	dtostrf(level_CH_2, 3, 0, float_string);
-	lcd.print("2L");
-	lcd.print(float_string);
-	lcd.print("dBm ");
+	if (tooLow || tooHigh)
+	{
+		lcd.print("2I/P too ");
+	}
+	else
+	{
+		dtostrf(level_CH_2, 3, 0, float_string);
+		lcd.print("2L");
+		lcd.print(float_string);
+		lcd.print("dBm ");
+	}
 
 	lcd.print("@ ");
 	dtostrf(att_CH2, 2, 0, float_string);
@@ -512,23 +529,24 @@ void display_power_CH_2()
 	lcd.write(byte(CHAR_UPDOWN));
 
 	lcd.setCursor(0, 1);
-	lcd.print("2P");
-	select_subunit_of_power_CH_2();
+	if (tooLow)
+	{
+		lcd.print("2 lo ")
+	}
+	else if (tooHigh)
+	{
+		lcd.print("2 hi ")
+	}
+	else
+	{
+		lcd.print("2P");
+		print_subunit_of_power_CH_2();
+	}
 
 	dtostrf(f_ghz, 3, 1, float_string);
 	lcd.print(float_string);
 	lcd.print("GHz");
 	lcd.write(byte(CHAR_LEFTRIGHT));
-
-	if ((level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 - att_calib_CH2) > error_limit_HIGH)
-	{
-		delay(300);
-		lcd.setCursor(0, 0);
-		lcd.print(" ");
-		lcd.setCursor(0, 1);
-		lcd.print(" ");
-		delay(300);
-	}
 }
 
 void select_subunit_of_power_CH_2() 
@@ -614,14 +632,14 @@ void display_ReturnLoss_and_SWR()
 	dtostrf(SWR, 3, 1, float_string);
 	lcd.print(float_string);
 
-	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 + att_calib_CH1) > error_limit_HIGH)
+	if ((level_CH_1 - att_CH1 - att_calib_CH1) < error_limit_LOW || (level_CH_1 - att_CH1 - att_calib_CH1) > error_limit_HIGH)
 	{
 		delay(300);
 		lcd.setCursor(0, 0);
 		lcd.print(" ");
 	}
 
-	if ((level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 + att_calib_CH2) > error_limit_HIGH)
+	if ((level_CH_2 - att_CH2 - att_calib_CH2) < error_limit_LOW || (level_CH_2 - att_CH2 - att_calib_CH2) > error_limit_HIGH)
 	{
 		lcd.setCursor(0, 1);
 		lcd.print(" ");
