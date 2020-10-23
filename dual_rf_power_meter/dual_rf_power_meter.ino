@@ -349,9 +349,9 @@ void display_power_CH_1()
 	lcd.setCursor(0, 1); 
 	
 	if(tooLow){
-		lcd.print("1 lo ");
+		lcd.print("1 low    ");
 	} else if(tooHigh) {
-		lcd.print("1 hi ");
+		lcd.print("1 high   ");
 	} else {
 		lcd.print("1P");
 		print_subunit_of_power_CH_1();
@@ -530,9 +530,9 @@ void display_power_CH_2()
 
 	lcd.setCursor(0, 1);
 	if (tooLow)
-		lcd.print("2 lo ");
+		lcd.print("2 low    ");
 	else if (tooHigh)
-		lcd.print("2 hi ");
+		lcd.print("2 high   ");
 	else
 	{
 		lcd.print("2P");
