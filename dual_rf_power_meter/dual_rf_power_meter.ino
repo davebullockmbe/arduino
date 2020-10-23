@@ -349,9 +349,9 @@ void display_power_CH_1()
 	lcd.setCursor(0, 1); 
 	
 	if(tooLow){
-		lcd.print("1 lo ")
+		lcd.print("1 lo ");
 	} else if(tooHigh) {
-		lcd.print("1 hi ")
+		lcd.print("1 hi ");
 	} else {
 		lcd.print("1P");
 		print_subunit_of_power_CH_1();
@@ -530,13 +530,9 @@ void display_power_CH_2()
 
 	lcd.setCursor(0, 1);
 	if (tooLow)
-	{
-		lcd.print("2 lo ")
-	}
+		lcd.print("2 lo ");
 	else if (tooHigh)
-	{
-		lcd.print("2 hi ")
-	}
+		lcd.print("2 hi ");
 	else
 	{
 		lcd.print("2P");
@@ -549,7 +545,7 @@ void display_power_CH_2()
 	lcd.write(byte(CHAR_LEFTRIGHT));
 }
 
-void select_subunit_of_power_CH_2() 
+void print_subunit_of_power_CH_2() 
 {
 	// select unit: W, mW, µW, nW
 	if (level_CH_2 < -30)
