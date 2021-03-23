@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "path": "C:/Program Files (x86)/Arduino",
+    "port": "COM8",
+    "sketch": "transistor-curve-tracer.ino"
+}
