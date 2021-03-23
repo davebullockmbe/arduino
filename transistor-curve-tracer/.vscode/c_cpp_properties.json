@@ -46,7 +46,7 @@
             "intelliSenseMode": "gcc-x64",
             "includePath": [
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
-                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\standard",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\micro",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\libraries\\SPI\\src",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\7.3.0\\include",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\7.3.0\\include-fixed",
@@ -60,8 +60,12 @@
             "defines": [
                 "F_CPU=16000000L",
                 "ARDUINO=10813",
-                "ARDUINO_AVR_UNO",
+                "ARDUINO_AVR_MICRO",
                 "ARDUINO_ARCH_AVR",
+                "USB_VID=0x2341",
+                "USB_PID=0x8037",
+                "USB_MANUFACTURER=\"Unknown\"",
+                "USB_PRODUCT=\"Arduino Micro\"",
                 "__DBL_MIN_EXP__=(-125)",
                 "__HQ_FBIT__=15",
                 "__cpp_attributes=200809",
