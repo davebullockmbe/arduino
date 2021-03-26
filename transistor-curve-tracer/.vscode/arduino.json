@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:micro",
     "path": "C:/Program Files (x86)/Arduino",
-    "port": "COM8",
+    "port": "COM6",
     "sketch": "transistor-curve-tracer.ino"
 }
