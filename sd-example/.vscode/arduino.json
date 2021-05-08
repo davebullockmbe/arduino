@@ -1,3 +1,8 @@
 {
-    "board": "arduino:avr:nano"
+    "board": "arduino:avr:nano",
+    "sketch": "sd-example.ino",
+    "programmer": "arduino:avrisp",
+    "configuration": "cpu=atmega328old",
+    "port": "COM7",
+    "output": "build"
 }
