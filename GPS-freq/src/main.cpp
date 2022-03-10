@@ -1,26 +1,28 @@
+
+#include <SoftwareSerial.h>
 #include <Adafruit_GPS.h>
+
 #include <maidenhead.h>
 #include <hd44780.h>                       // main hd44780 header
 #include <hd44780ioClass/hd44780_I2Cexp.h> // i2c expander i/o class header
 
-#define GPSSerial Serial2
-#define GPSECHO false
-
+#define TXPin 2
+#define RXPin 3
 
 hd44780_I2Cexp lcd;
-Adafruit_GPS GPS(&GPSSerial);
+SoftwareSerial ss(TXPin, RXPin);
+Adafruit_GPS GPS(&ss);
 
 uint32_t timer = millis();
 
 void setup()
 {
-	lcd.begin(16, 2);
+	Serial.begin(115200);
+
+	lcd.begin(20, 4);
 
 	lcd.clear();
 	lcd.print("Initialising...");
-
-
-	Serial.begin(115200);
 
 	// 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
 	GPS.begin(9600);
@@ -41,7 +43,7 @@ void setup()
 	delay(1000);
 
 	// Ask for firmware version
-	GPSSerial.println(PMTK_Q_RELEASE);
+	ss.println(PMTK_Q_RELEASE);
 
 }
 
@@ -49,9 +51,8 @@ void loop() // run over and over again
 {
 	// read data from the GPS in the 'main loop'
 	char c = GPS.read();
-
-	if (GPSECHO)
-		if (c) Serial.print(c);
+	if(c)
+		Serial.print(c);
 
 	// if a sentence is received, we can check the checksum, parse it...
 	if (GPS.newNMEAreceived()) {
@@ -73,19 +74,26 @@ void loop() // run over and over again
 	
 	lcd.setCursor(0, 0);
 
-	if (GPS.hour < 10)
-		lcd.print('0');
-	lcd.print(GPS.hour, DEC);
-	lcd.print(':');
-	if (GPS.minute < 10)
-		lcd.print('0');
-	lcd.print(GPS.minute, DEC);
-	lcd.print(':');
-	if (GPS.seconds < 10)
-		lcd.print('0');
-	lcd.print(GPS.seconds, DEC);
-
-	lcd.print("   Sats: ");
+	if(GPS.satellites > 0)
+ 	{	
+		if (GPS.hour < 10)
+			lcd.print('0');
+		lcd.print(GPS.hour, DEC);
+		lcd.print(':');
+		if (GPS.minute < 10)
+			lcd.print('0');
+		lcd.print(GPS.minute, DEC);
+		lcd.print(':');
+		if (GPS.seconds < 10)
+			lcd.print('0');
+		lcd.print(GPS.seconds, DEC);
+		lcd.print("   Sats: ");
+	}
+	else
+	{
+		lcd.print("           Sats: ");
+	}
+	
 	lcd.print(GPS.satellites);
 
 
@@ -99,30 +107,30 @@ void loop() // run over and over again
 		lcd.print(GPS.latitudeDegrees, 5);
 		lcd.print(", ");
 		lcd.print(GPS.longitudeDegrees, 5);
-		
+		lcd.print("                     ");
+
 		char* maidenhead = get_mh(GPS.latitudeDegrees, GPS.longitudeDegrees, 6);
-		Serial.print("Maidenhead: ");
-		Serial.println(maidenhead);
 		
 		// Line 2
 		
 		lcd.setCursor(0, 2);
 		lcd.print("Alt: ");
 		lcd.print(GPS.altitude);
-		lcd.print("m");
+		lcd.print("m                    ");
 
 		// Line 3
 
 		lcd.setCursor(0, 3);
 		lcd.print("Maidenhead: ");
 		lcd.print(maidenhead);
+		lcd.print("                     ");
 	}
 	else 
 	{
-		lcd.print("No satellite fix    ");
+		lcd.print("GPS frequency source");
 		lcd.setCursor(0, 2);
-		lcd.print("Searching...       ");
+		lcd.print("unavailable.        ");
 		lcd.setCursor(0, 3);
-		lcd.print("                    ");
+		lcd.print("No satellite fix.   ");
 	}
 }
