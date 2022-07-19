@@ -122,9 +122,9 @@ void loop()
 	  else //position was good, print to serial stream
 	  {
 	    
-	    Serial.print("Encoder 0: ");
-	    Serial.print(encoderPosition, DEC); //print the position in decimal format
-	    Serial.write(NEWLINE);
+	    //Serial.println(encoderPosition, DEC); //print the position in decimal format
+		uint16_t degrees = map(encoderPosition, 0, 16384, 0, 3640);
+		Serial.println(degrees);
 	  }
 
 	  //For the purpose of this demo we don't need the position returned that quickly so let's wait a half second between reads

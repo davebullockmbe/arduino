@@ -14,6 +14,8 @@ SoftwareSerial ss(TXPin, RXPin);
 Adafruit_GPS GPS(&ss);
 
 uint32_t timer = millis();
+uint8_t prevSats = 0;
+bool prevFix = false;
 
 void setup()
 {
@@ -95,6 +97,12 @@ void loop() // run over and over again
 	}
 	
 	lcd.print(GPS.satellites);
+	
+	// trailing whitespace
+	if(GPS.satellites < 100)
+		lcd.print(" ");
+	if(GPS.satellites < 10)
+		lcd.print(" ");
 
 
 	// Line 1
@@ -104,10 +112,15 @@ void loop() // run over and over again
 
 	if (GPS.fix)
 	{
+		if(!prevFix)
+		{
+			lcd.clear();
+			prevFix = true;
+		}
+
 		lcd.print(GPS.latitudeDegrees, 5);
 		lcd.print(", ");
 		lcd.print(GPS.longitudeDegrees, 5);
-		lcd.print("                     ");
 
 		char* maidenhead = get_mh(GPS.latitudeDegrees, GPS.longitudeDegrees, 6);
 		
@@ -116,17 +129,20 @@ void loop() // run over and over again
 		lcd.setCursor(0, 2);
 		lcd.print("Alt: ");
 		lcd.print(GPS.altitude);
-		lcd.print("m                    ");
+		lcd.print("m");
 
 		// Line 3
 
 		lcd.setCursor(0, 3);
 		lcd.print("Maidenhead: ");
 		lcd.print(maidenhead);
-		lcd.print("                     ");
+		lcd.print("  ");
 	}
 	else 
 	{
+		if(prevFix)
+			prevFix = false;
+		
 		lcd.print("GPS frequency source");
 		lcd.setCursor(0, 2);
 		lcd.print("unavailable.        ");
