@@ -14,6 +14,9 @@ class Display
 public:
 	Display()
 	{
+		lcd = new hd44780_I2Cexp();
+		lcd->begin(16, 2);
+		lcd->clear();
 		lcd->setCursor(0, 0);
 		lcd->print("Tgt 000°");
 		targetPos = 0;
@@ -52,6 +55,7 @@ public:
 	void setSpeed(uint8_t speed)
 	{
 		lcd->setCursor(4, 1);
+		
 		if(speed == Speed_Zero)
 			lcd->print("  0");
 		else if(speed == Speed_Half)
@@ -61,4 +65,4 @@ public:
 	}
 };
 
-#endif display_h
+#endif

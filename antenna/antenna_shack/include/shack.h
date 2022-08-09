@@ -4,6 +4,7 @@
 #include <RotaryEncoder.h>
 #include <constants.h>
 #include <display.h>
+#include <AltSoftSerial.h>
 
 #define TX HIGH
 #define RX LOW
@@ -23,6 +24,7 @@ class Shack
 {
 	RotaryEncoder* knob;
 	Display* display;
+	AltSoftSerial* uart;
 
 	int currentAntennaPosition = 0;
 	int targetAntennaPosition = 0;
@@ -139,7 +141,7 @@ class Shack
 		display->setSpeed(mode);
 	}
 
-	void setTxRx(bool mode)
+	void setTxRx(int mode)
 	{
 		digitalWrite(enableTxPin, mode);
 	}
@@ -153,19 +155,23 @@ class Shack
 	void handleResponse()
 	{
 		// TODO: error handling
-		while(!Serial.available())
+
+		Serial.println("Waiting for response");
+		while(!uart->available())
 			delay(10);
 
-		if(Serial.read() == Message_Initiate)
+		Serial.println("	got response");
+
+		if(uart->read() == Message_Initiate)
 		{
-			char message = Serial.read();
+			char message = uart->read();
 
 			if(message == Response_Position)
 			{
-				uint16_t position = Serial.read() << 8;
-				position |= Serial.read();
+				uint16_t position = uart->read() << 8;
+				position |= uart->read();
 
-				if(Serial.read() != Message_End)
+				if(uart->read() != Message_End)
 				{
 					// TODO: handle error
 					return;
@@ -178,12 +184,13 @@ class Shack
 
 	void readPosition()
 	{
+		Serial.println("Sending Read Position message");
 		setTxRx(TX);
 
-		Serial.print(Message_Initiate);
-		Serial.print(Command_ReadPosition);
-		Serial.print(Message_End);
-		Serial.flush();
+		uart->print(Message_Initiate);
+		uart->print(Command_ReadPosition);
+		uart->print(Message_End);
+		uart->flush();
 
 		setTxRx(RX);
 
@@ -194,6 +201,10 @@ public:
 	Shack(uint8_t encoderPin1, uint8_t encoderPin2, uint8_t increasePositionPin, uint8_t decreasePositionPin, 
 		uint8_t halfSpeedPin, uint8_t enableTxPin)
 	{
+		this->display = new Display();
+		this->uart = new AltSoftSerial(3, 7);
+		this->uart->begin(9600);
+
 		this->knob = new RotaryEncoder(encoderPin1, encoderPin2, RotaryEncoder::LatchMode::FOUR3);
 
 		this->increasePositionPin = increasePositionPin;

@@ -4,26 +4,30 @@
 #include <Arduino.h>
 #include <constants.h>
 #include <AMT22.h>
-
+#include <AltSoftSerial.h>
 
 class Antenna
 {
 	AMT22* encoder;
+	AltSoftSerial* uart;
 	uint8_t encoderCSPin;
 	uint8_t enableTxPin;
 
 	void handleCommand()
 	{
-		if(!Serial.available())
+		if(!uart->available())
 			return;
 
-		if(Serial.read() == Message_Initiate)
+		if(uart->read() == Message_Initiate)
 		{
-			char message = Serial.read();
+			Serial.println("Received UART message:");
+			char message = uart->read();
 
 			if(message == Command_ReadPosition)
 			{
-				if(Serial.read() != Message_End)
+				Serial.println("	ReadPosition");
+
+				if(uart->read() != Message_End)
 					// TODO: handle error
 					return;
 
@@ -34,20 +38,23 @@ class Antenna
 
 	void handleReadPosition()
 	{
-		uint16_t pos = encoder.getPosition();
+		uint16_t pos = encoder->getPosition();
 		
+		Serial.print("		Read position: ");
+		Serial.println(pos);
+
 		setTxRx(TX);
 
-		Serial.print(Message_Initiate);
-		Serial.print(Response_Position);
+		uart->print(Message_Initiate);
+		uart->print(Response_Position);
 		
 		uint8_t pos8 = pos >> 8;
-		Serial.print(pos);
+		uart->print(pos8);
 		pos8 = pos;
-		Serial.print(pos);
+		uart->print(pos8);
 
-		Serial.print(Message_End);
-		Serial.flush();
+		uart->print(Message_End);
+		uart->flush();
 
 		setTxRx(RX);	
 	}
@@ -65,6 +72,9 @@ public:
 		digitalWrite(enableTxPin, LOW); 
 
 		this->encoderCSPin = encoderCSPin;
+
+		this->uart = new AltSoftSerial(3, 7);
+		this->uart->begin(9600);
 	}
 
 	void loop()
