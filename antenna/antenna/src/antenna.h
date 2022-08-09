@@ -10,15 +10,16 @@ class Antenna
 {
 	AMT22* encoder;
 	AltSoftSerial* uart;
-	uint8_t encoderCSPin;
 	uint8_t enableTxPin;
 
 	void handleCommand()
 	{
-		if(!uart->available())
+		if(uart->available() < 3)
 			return;
 
-		if(uart->read() == Message_Initiate)
+		char c = uart->read();
+
+		if(c == Message_Initiate)
 		{
 			Serial.println("Received UART message:");
 			char message = uart->read();
@@ -61,24 +62,31 @@ class Antenna
 
 	void setTxRx(bool mode)
 	{
-		digitalWrite(this->encoderCSPin, mode);
+		digitalWrite(this->enableTxPin, mode);
 	}
 
 public:
-	Antenna(uint8_t enableTxPin, uint8_t encoderCSPin)
+	Antenna(AltSoftSerial* uart, uint8_t enableTxPin, uint8_t encoderCSPin)
 	{
 		this->enableTxPin = enableTxPin;
 		pinMode(enableTxPin, OUTPUT);
 		digitalWrite(enableTxPin, LOW); 
 
-		this->encoderCSPin = encoderCSPin;
-
-		this->uart = new AltSoftSerial(3, 7);
-		this->uart->begin(9600);
+		this->encoder = new AMT22(encoderCSPin);
+		this->uart = uart;
 	}
 
 	void loop()
 	{
+	// 	char c;
+	// 	if (Serial.available()) {
+	// 		c = Serial.read();
+	// 		uart->print(c);
+	// 	}
+	// 	if (uart->available()) {
+	// 		c = uart->read();
+	// 		Serial.print(c);
+	// 	}
 		handleCommand();
 	}
 };

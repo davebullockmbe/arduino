@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "antenna",
+			"path": "antenna"
+		},
+		{
+			"name": "antenna_shack",
+			"path": "antenna_shack"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}
