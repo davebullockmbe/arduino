@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "antenna"
+		},
+		{
+			"name": "antenna_shack",
+			"path": "antenna_shack"
+		}
+	],
+	"settings": {}
+}
