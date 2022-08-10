@@ -152,50 +152,46 @@ class Shack
 		display->setCurrentPosition(degrees);
 	}
 
-	void handleResponse()
+	void readPosition()
 	{
 		// TODO: error handling
 
-		Serial.println("Waiting for response");
-		while(!uart->available())
-			delay(10);
+		if(uart->available() < 4)
+			return;
 
-		Serial.println("	got response");
-
-		if(uart->read() == Message_Initiate)
+		char c = uart->read();
+		if(c == Message_Initiate)
 		{
-			char message = uart->read();
+			uint16_t position = uart->read() << 8;
+			position |= uart->read();
 
-			if(message == Response_Position)
+			Serial.print("Position: ");
+			Serial.println(position);
+
+			if(uart->read() != Message_End)
 			{
-				uint16_t position = uart->read() << 8;
-				position |= uart->read();
+				// TODO: handle error
+				return;
+			}
 
-				if(uart->read() != Message_End)
-				{
-					// TODO: handle error
-					return;
-				}
-
-				updateAntennaPosition(position);
-			}	
+			//updateAntennaPosition(position);
 		}
 	}
 
-	void readPosition()
-	{
-		Serial.println("Sending Read Position message");
-		//setTxRx(TX);
+	// void readPosition()
+	// {
+	// 	Serial.println("Sending Read Position message");
+	// 	//setTxRx(TX);
 
-		uart->print(Message_Initiate);
-		uart->print(Command_ReadPosition);
-		uart->print(Message_End);
-		uart->flush();
+	// 	uart->print(Message_Initiate);
+	// 	uart->print(Command_ReadPosition);
+	// 	uart->print(Message_End);
+	// 	uart->flush();
 
-		//setTxRx(RX);
+	// 	//setTxRx(RX);
 
-		handleResponse();
-	}
+	// 	handleResponse();
+	// }
 
 public:
 	Shack(AltSoftSerial* uart, uint8_t encoderPin1, uint8_t encoderPin2, uint8_t increasePositionPin, uint8_t decreasePositionPin, 
