@@ -11,16 +11,17 @@
 class Shack
 {
 	RotaryEncoder* knob;
-	Button* knobButton;
+	Button* menuButton;
+	Button* targetButton;
 	Display* display;
 	AltSoftSerial* uart;
 
 	// Values in degrees * 10
 	uint16_t currentAntennaPosition = 0;
-	int16_t antennaPositionCalibration = 0;
+	uint16_t antennaPositionCalibration = 0;
 	uint16_t targetAntennaPosition = 0;
 
-	bool firstRead = true;
+	bool setTargetToCurrentOnNextRead = true;
 
 	bool moving = false;
 	uint8_t direction = Direction_Decreasing;
@@ -34,9 +35,9 @@ class Shack
 
 	uint8_t displayMode = Mode_Run;
 
-	void handleButtonPress()
+	void handleMenuButtonPress()
 	{
-		if(!knobButton->pressed())
+		if(!menuButton->pressed())
 			return;
 		
 		// if(targetAntennaPosition != currentAntennaPosition)
@@ -55,6 +56,7 @@ class Shack
 			Serial.print("Setting position calibration to ");
 			Serial.println(antennaPositionCalibration);
 			writeCalibrationPos();
+			setTargetToCurrentOnNextRead = true;
 		}
 
 		displayMode++;
@@ -76,6 +78,23 @@ class Shack
 		knobPosition = 0;
 	}
 
+
+	void runMode_handleTargetButtonPress()
+	{
+		if(!targetButton->pressed())
+			return;
+		
+		if(targetAntennaPosition == currentAntennaPosition)
+			return;
+		
+		Serial.print("Start moving from: ");
+		Serial.print(currentAntennaPosition);
+		Serial.print(" to ");
+		Serial.println(targetAntennaPosition);
+
+		moving = true;
+	}
+
 	void runMode_handleKnob()
 	{
 		knob->tick();
@@ -87,35 +106,9 @@ class Shack
 		int diff = newPos - knobPosition;
 		knobPosition = newPos;
 
-		int16_t newTarget = targetAntennaPosition + (diff * 5);
-
-		if(newTarget < 0)
-			targetAntennaPosition = 3600 + newTarget;
-		else if(newTarget >= 3600)
-			targetAntennaPosition = newTarget - 3600;
-		else
-			targetAntennaPosition = newTarget;
-
-		Serial.println(targetAntennaPosition);
+		targetAntennaPosition = cycle360(targetAntennaPosition + (diff * 10)); //5)); // TODO put back to .5 degree
 
 		display->setTargetPosition(targetAntennaPosition);
-	}
-
-	void calibratePosMode_handleKnob()
-	{
-		knob->tick();
-		int16_t newPos = knob->getPosition();
-		
-		if(knobPosition == newPos)
-			return;
-
-		int diff = newPos - knobPosition;
-		knobPosition = newPos;
-
-		antennaPositionCalibration = antennaPositionCalibration + (diff * 5);
-		
-		// TODO: handle cycling
-		display->setCalibrationPosition(currentAntennaPosition + antennaPositionCalibration);
 	}
 
 	void runMode_setAntennaPosition()
@@ -127,7 +120,6 @@ class Shack
 			
 		if(currentAntennaPosition == targetAntennaPosition)
 		{
-			Serial.println("stop");
 			stop();
 			moving = false;
 			return;
@@ -142,13 +134,11 @@ class Shack
 			// if we're nearly there...
 			if(currentAntennaPosition >= targetAntennaPosition - HalfSpeedPositionThreshold)
 			{
-				Serial.println("I Go slow");
 				speed = Speed_Half;
 			}
 			// if we've overshot...
 			else if(currentAntennaPosition > targetAntennaPosition)
 			{
-				Serial.println("I Overshot");
 				direction = Direction_Decreasing;
 				speed = Speed_Half;
 			}
@@ -159,13 +149,11 @@ class Shack
 			// if we're nearly there...
 			if(currentAntennaPosition <= targetAntennaPosition + HalfSpeedPositionThreshold)
 			{
-				Serial.println("D Go slow");
 				speed = Speed_Half;
 			}
 			// if we've overshot...
 			else if(currentAntennaPosition < targetAntennaPosition)
 			{
-				Serial.println("D Overshot");
 				direction = Direction_Increasing;
 				speed = Speed_Half;
 			}
@@ -175,23 +163,54 @@ class Shack
 		move(speed, direction);
 	}
 
-	void runMode_updateAntennaPosition(uint16_t position)
+	void updateAntennaPosition(uint16_t position)
 	{
 		uint16_t degrees = map(position, 0, 16384, 0, 3600);
 		// round to nearest 0.5 (value is * 10)
 		degrees -= degrees % 5;
 		
-		// TODO: cycling
-		currentAntennaPosition = degrees + antennaPositionCalibration;
+		currentAntennaPosition = cycle360(degrees + antennaPositionCalibration);
 
-		display->setCurrentPosition(currentAntennaPosition);
+		if(displayMode == Mode_Run)
+			display->setCurrentPosition(currentAntennaPosition);
 
-		if(firstRead)
+		if(setTargetToCurrentOnNextRead)
 		{
 			targetAntennaPosition = currentAntennaPosition;
 			display->setTargetPosition(targetAntennaPosition);
-			firstRead = false;
+			setTargetToCurrentOnNextRead = false;
 		}
+	}
+
+	void calibratePosMode_handleKnob()
+	{
+		knob->tick();
+		int16_t newPos = knob->getPosition();
+		
+		if(knobPosition == newPos)
+			return;
+
+		int diff = newPos - knobPosition;
+		knobPosition = newPos;
+
+		uint16_t oldAntennaPositionCalibration = antennaPositionCalibration;
+
+		antennaPositionCalibration = cycle360(antennaPositionCalibration + (diff * 5));
+		
+		int16_t value = cycle360(currentAntennaPosition - oldAntennaPositionCalibration + antennaPositionCalibration);
+		
+		display->setCalibrationPosition(value);
+	}
+
+	uint16_t cycle360(int16_t value)
+	{
+		if(value < 0)
+			return 3600 + value;
+		
+		if(value >= 3600)
+			return value - 3600;
+		
+		return value;
 	}
 
 	void stop()
@@ -256,7 +275,7 @@ class Shack
 				return;
 			}
 
-			runMode_updateAntennaPosition(position);
+			updateAntennaPosition(position);
 		}
 	}
 
@@ -266,7 +285,7 @@ class Shack
 		EEPROM.get(0, pos);
 
 		//handle empty EEPROM
-		//if(pos == 65535)
+		if(pos == 65535)
 			pos = 0;
 		
 		antennaPositionCalibration = pos;
@@ -278,7 +297,7 @@ class Shack
 	}
 
 public:
-	Shack(AltSoftSerial* uart, uint8_t encoderPin1, uint8_t encoderPin2, uint8_t encoderButtonPin, uint8_t directionPin, uint8_t runPin, uint8_t halfSpeedPin)
+	Shack(AltSoftSerial* uart, uint8_t encoderPin1, uint8_t encoderPin2, uint8_t encoderButtonPin, uint8_t directionPin, uint8_t runPin, uint8_t halfSpeedPin, uint8_t targetButtonPin)
 	{
 		EEPROM.begin();
 
@@ -289,8 +308,11 @@ public:
 		this->display = new Display();
 		this->display->setRunMode(0, 0);
 
+		this->displayMode = Mode_Run;
+
 		this->knob = new RotaryEncoder(encoderPin1, encoderPin2, RotaryEncoder::LatchMode::FOUR3);
-		this->knobButton = new Button(encoderButtonPin, INPUT_PULLUP);
+		this->menuButton = new Button(encoderButtonPin, INPUT_PULLUP);
+		this->targetButton = new Button(targetButtonPin, INPUT_PULLUP);
 
 		this->directionPin = directionPin;
 		this->runPin = runPin;
@@ -305,10 +327,11 @@ public:
 
 	void loop()
 	{
-		handleButtonPress();
+		handleMenuButtonPress();
 
 		if(displayMode == Mode_Run)
 		{
+			runMode_handleTargetButtonPress();
 			runMode_setAntennaPosition();
 			runMode_handleKnob();
 			return;
@@ -316,6 +339,7 @@ public:
 
 		if(displayMode == Mode_Calibrate_Pos)
 		{
+			readPosition();
 			calibratePosMode_handleKnob();
 		}
 	}
