@@ -52,11 +52,10 @@ public:
 		calibrationPos = 0;
 	}
 
-	void setRunMode(uint16_t target, uint16_t current, int16_t calibrationOffset)
+	void setRunMode(uint16_t target, uint16_t current)
 	{
-		// TODO: handle cycles
-		currentPos = current + calibrationOffset;
-		targetPos = target + calibrationOffset;
+		currentPos = current;
+		targetPos = target;
 
 		lcd->clear();
 
@@ -75,11 +74,9 @@ public:
 		lcd->print("Direction CCW");
 	}
 
-	void setCalibratePosMode(uint16_t current, int16_t calibrationOffset)
+	void setCalibratePosMode(uint16_t position)
 	{
-		// TODO: handle cycles
-		calibrationPos = current + calibrationOffset;
-
+		calibrationPos = position;
 		lcd->clear();
 
 		lcd->setCursor(0, 0);
@@ -91,37 +88,31 @@ public:
 		lcd->setCursor(0, 2);
 		
 		lcd->print("       ");
-		printDegrees(current);
+		printDegrees(calibrationPos);
 	}
 
-	void setCalibrationPosition(uint16_t position, int16_t calibrationOffset)
+	void setCalibrationPosition(uint16_t position)
 	{
-		// TODO: handle cycles
-		uint16_t degrees = position + calibrationOffset;
-		if(degrees == calibrationPos)
+		if(position == calibrationPos)
 			return;
 
 		lcd->setCursor(7, 2);
-		printDegrees(degrees);
+		printDegrees(position);
 	}
 
-	void setTargetPosition(uint16_t degrees, int16_t calibrationOffset)
+	void setTargetPosition(uint16_t degrees)
 	{
-		// TODO: handle cycles
-		degrees += calibrationOffset;
-
 		if(degrees == targetPos)
 			return;
 
+		targetPos = degrees;
+		
 		lcd->setCursor(8, 0);
 		printDegrees(degrees);
 	}
 
-	void setCurrentPosition(uint16_t degrees, int16_t calibrationOffset)
+	void setCurrentPosition(uint16_t degrees)
 	{
-		// TODO: handle cycles
-		degrees += calibrationOffset;
-		
 		if(degrees == currentPos)
 			return;
 			

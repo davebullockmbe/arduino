@@ -49,6 +49,7 @@ class Shack
 		// 	moving = true;
 		// }
 		
+		// writes
 		if(displayMode == Mode_Calibrate_Pos)
 		{
 			Serial.print("Setting position calibration to ");
@@ -61,9 +62,14 @@ class Shack
 			displayMode = Mode_Run;
 
 		if(displayMode == Mode_Run)
-			display->setRunMode(targetAntennaPosition, currentAntennaPosition, antennaPositionCalibration);
+		{
+			targetAntennaPosition = currentAntennaPosition;
+			display->setRunMode(targetAntennaPosition, currentAntennaPosition);
+		}
 		else if(displayMode == Mode_Calibrate_Pos)
-			display->setCalibratePosMode(currentAntennaPosition, antennaPositionCalibration);
+		{
+			display->setCalibratePosMode(currentAntennaPosition);
+		}
 
 		// reset knob activity
 		knob->setPosition(0);
@@ -81,9 +87,18 @@ class Shack
 		int diff = newPos - knobPosition;
 		knobPosition = newPos;
 
-		targetAntennaPosition = targetAntennaPosition + (diff * 5);
-		
-		display->setTargetPosition(targetAntennaPosition, antennaPositionCalibration);
+		int16_t newTarget = targetAntennaPosition + (diff * 5);
+
+		if(newTarget < 0)
+			targetAntennaPosition = 3600 + newTarget;
+		else if(newTarget >= 3600)
+			targetAntennaPosition = newTarget - 3600;
+		else
+			targetAntennaPosition = newTarget;
+
+		Serial.println(targetAntennaPosition);
+
+		display->setTargetPosition(targetAntennaPosition);
 	}
 
 	void calibratePosMode_handleKnob()
@@ -99,9 +114,8 @@ class Shack
 
 		antennaPositionCalibration = antennaPositionCalibration + (diff * 5);
 		
-		Serial.println(antennaPositionCalibration);
 		// TODO: handle cycling
-		display->setCalibrationPosition(currentAntennaPosition, antennaPositionCalibration);
+		display->setCalibrationPosition(currentAntennaPosition + antennaPositionCalibration);
 	}
 
 	void runMode_setAntennaPosition()
@@ -166,15 +180,16 @@ class Shack
 		uint16_t degrees = map(position, 0, 16384, 0, 3600);
 		// round to nearest 0.5 (value is * 10)
 		degrees -= degrees % 5;
+		
+		// TODO: cycling
+		currentAntennaPosition = degrees + antennaPositionCalibration;
 
-		display->setCurrentPosition(degrees, antennaPositionCalibration);
-
-		currentAntennaPosition = degrees;
+		display->setCurrentPosition(currentAntennaPosition);
 
 		if(firstRead)
 		{
-			targetAntennaPosition = degrees;
-			display->setTargetPosition(targetAntennaPosition, antennaPositionCalibration);
+			targetAntennaPosition = currentAntennaPosition;
+			display->setTargetPosition(targetAntennaPosition);
 			firstRead = false;
 		}
 	}
@@ -272,7 +287,7 @@ public:
 		this->uart = uart;
 
 		this->display = new Display();
-		this->display->setRunMode(0, 0, antennaPositionCalibration);
+		this->display->setRunMode(0, 0);
 
 		this->knob = new RotaryEncoder(encoderPin1, encoderPin2, RotaryEncoder::LatchMode::FOUR3);
 		this->knobButton = new Button(encoderButtonPin, INPUT_PULLUP);
