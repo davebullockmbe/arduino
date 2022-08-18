@@ -6,6 +6,7 @@
 #include <display.h>
 #include <AltSoftSerial.h>
 #include <button.h>
+#include <EEPROM.h>
 
 class Shack
 {
@@ -14,20 +15,62 @@ class Shack
 	Display* display;
 	AltSoftSerial* uart;
 
-	int currentAntennaPosition = 0;
-	int targetAntennaPosition = 0;
+	// Values in degrees * 10
+	uint16_t currentAntennaPosition = 0;
+	int16_t antennaPositionCalibration = 0;
+	uint16_t targetAntennaPosition = 0;
+
+	bool firstRead = true;
+
 	bool moving = false;
 	uint8_t direction = Direction_Decreasing;
 	uint8_t speed = Speed_Stop;
 
 	int16_t knobPosition = 0;
-	bool firstRead = true;
 
 	uint8_t directionPin;
 	uint8_t runPin;
 	uint8_t halfSpeedPin;
 
-	void handleKnob()
+	uint8_t displayMode = Mode_Run;
+
+	void handleButtonPress()
+	{
+		if(!knobButton->pressed())
+			return;
+		
+		// if(targetAntennaPosition != currentAntennaPosition)
+		// {
+		// 	Serial.print("Start moving from: ");
+		// 	Serial.print(currentAntennaPosition);
+		// 	Serial.print(" to ");
+		// 	Serial.println(targetAntennaPosition);
+
+		// 	moving = true;
+		// }
+		
+		if(displayMode == Mode_Calibrate_Pos)
+		{
+			Serial.print("Setting position calibration to ");
+			Serial.println(antennaPositionCalibration);
+			writeCalibrationPos();
+		}
+
+		displayMode++;
+		if(displayMode > Mode_Calibrate_Max)
+			displayMode = Mode_Run;
+
+		if(displayMode == Mode_Run)
+			display->setRunMode(targetAntennaPosition, currentAntennaPosition, antennaPositionCalibration);
+		else if(displayMode == Mode_Calibrate_Pos)
+			display->setCalibratePosMode(currentAntennaPosition, antennaPositionCalibration);
+
+		// reset knob activity
+		knob->setPosition(0);
+		knobPosition = 0;
+	}
+
+	void runMode_handleKnob()
 	{
 		knob->tick();
 		int16_t newPos = knob->getPosition();
@@ -40,26 +83,28 @@ class Shack
 
 		targetAntennaPosition = targetAntennaPosition + (diff * 5);
 		
-		display->setTargetPosition(targetAntennaPosition);
+		display->setTargetPosition(targetAntennaPosition, antennaPositionCalibration);
 	}
 
-	void handleButtonPress()
+	void calibratePosMode_handleKnob()
 	{
-		if(knobButton->pressed())
-		{
-			if(targetAntennaPosition != currentAntennaPosition)
-			{
-				Serial.print("Start moving from: ");
-				Serial.print(currentAntennaPosition);
-				Serial.print(" to ");
-				Serial.println(targetAntennaPosition);
+		knob->tick();
+		int16_t newPos = knob->getPosition();
+		
+		if(knobPosition == newPos)
+			return;
 
-				moving = true;
-			}
-		}
+		int diff = newPos - knobPosition;
+		knobPosition = newPos;
+
+		antennaPositionCalibration = antennaPositionCalibration + (diff * 5);
+		
+		Serial.println(antennaPositionCalibration);
+		// TODO: handle cycling
+		display->setCalibrationPosition(currentAntennaPosition, antennaPositionCalibration);
 	}
 
-	void loop_setAntennaPosition()
+	void runMode_setAntennaPosition()
 	{
 		readPosition();
 
@@ -116,6 +161,24 @@ class Shack
 		move(speed, direction);
 	}
 
+	void runMode_updateAntennaPosition(uint16_t position)
+	{
+		uint16_t degrees = map(position, 0, 16384, 0, 3600);
+		// round to nearest 0.5 (value is * 10)
+		degrees -= degrees % 5;
+
+		display->setCurrentPosition(degrees, antennaPositionCalibration);
+
+		currentAntennaPosition = degrees;
+
+		if(firstRead)
+		{
+			targetAntennaPosition = degrees;
+			display->setTargetPosition(targetAntennaPosition, antennaPositionCalibration);
+			firstRead = false;
+		}
+	}
+
 	void stop()
 	{
 		move(Speed_Stop, Direction_Increasing);
@@ -156,29 +219,6 @@ class Shack
 		}
 	}
 
-	void setTxRx(int mode)
-	{
-		//digitalWrite(enableTxPin, mode);
-	}
-
-	void updateAntennaPosition(uint16_t position)
-	{
-		uint16_t degrees = map(position, 0, 16384, 0, 3600);
-		// round to nearest 0.5 (value is * 10)
-		degrees -= degrees % 5;
-
-		display->setCurrentPosition(degrees);
-
-		currentAntennaPosition = degrees;
-
-		if(firstRead)
-		{
-			targetAntennaPosition = degrees;
-			display->setTargetPosition(targetAntennaPosition);
-			firstRead = false;
-		}
-	}
-
 	void readPosition()
 	{
 		// TODO: error handling
@@ -201,15 +241,38 @@ class Shack
 				return;
 			}
 
-			updateAntennaPosition(position);
+			runMode_updateAntennaPosition(position);
 		}
+	}
+
+	void readCalibrationPos()
+	{
+		uint16_t pos = 0;
+		EEPROM.get(0, pos);
+
+		//handle empty EEPROM
+		//if(pos == 65535)
+			pos = 0;
+		
+		antennaPositionCalibration = pos;
+	}
+
+	void writeCalibrationPos()
+	{
+		EEPROM.put(0, antennaPositionCalibration);
 	}
 
 public:
 	Shack(AltSoftSerial* uart, uint8_t encoderPin1, uint8_t encoderPin2, uint8_t encoderButtonPin, uint8_t directionPin, uint8_t runPin, uint8_t halfSpeedPin)
 	{
-		this->display = new Display();
+		EEPROM.begin();
+
+		readCalibrationPos();
+
 		this->uart = uart;
+
+		this->display = new Display();
+		this->display->setRunMode(0, 0, antennaPositionCalibration);
 
 		this->knob = new RotaryEncoder(encoderPin1, encoderPin2, RotaryEncoder::LatchMode::FOUR3);
 		this->knobButton = new Button(encoderButtonPin, INPUT_PULLUP);
@@ -227,9 +290,19 @@ public:
 
 	void loop()
 	{
-		loop_setAntennaPosition();
-		handleKnob();
 		handleButtonPress();
+
+		if(displayMode == Mode_Run)
+		{
+			runMode_setAntennaPosition();
+			runMode_handleKnob();
+			return;
+		}
+
+		if(displayMode == Mode_Calibrate_Pos)
+		{
+			calibratePosMode_handleKnob();
+		}
 	}
 };
 
