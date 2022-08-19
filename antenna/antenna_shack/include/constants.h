@@ -13,6 +13,7 @@
 
 #define Direction_Increasing HIGH
 #define Direction_Decreasing LOW
+#define Direction_None 0x2
 
 #define Speed_Stop 0
 #define Speed_Half 1

@@ -229,7 +229,7 @@ class Shack
 		move(Speed_Stop, Direction_Increasing);
 	}
 
-	void move(uint8_t speed, bool direction)
+	void move(uint8_t speed, uint8_t direction)
 	{
 		//Serial.print("Move: ");
 		//Serial.print(speed);
@@ -237,21 +237,23 @@ class Shack
 		//Serial.println(direction);
 
 		digitalWrite(directionPin, direction);
-		display->setDirection(direction);
 
 		if(speed == Speed_Stop)
 		{
 			digitalWrite(runPin, Run_OFF);
 			digitalWrite(halfSpeedPin, Slow_OFF);
-			display->setSpeed(0);
+			display->setSpeed(Speed_Stop);
+			display->setDirection(Direction_None);
 			return;
 		}
+
+		display->setDirection(direction);
 		
 		if(speed == Speed_Half)
 		{
 			digitalWrite(runPin, Run_ON);
 			digitalWrite(halfSpeedPin, Slow_ON);
-			display->setSpeed(0);
+			display->setSpeed(Speed_Half);
 			return;
 		}
 
@@ -259,7 +261,7 @@ class Shack
 		{
 			digitalWrite(runPin, Run_ON);
 			digitalWrite(halfSpeedPin, Slow_OFF);
-			display->setSpeed(0);
+			display->setSpeed(Speed_Full);
 			return;
 		}
 	}

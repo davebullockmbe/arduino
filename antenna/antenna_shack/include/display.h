@@ -60,18 +60,18 @@ public:
 		lcd->clear();
 
 		lcd->setCursor(0, 0);
-		lcd->print("Target  ");
+		lcd->print("Target pos: ");
 		printDegrees(targetPos);
 
 		lcd->setCursor(0, 1);
-		lcd->print("Current ");
+		lcd->print("Current pos: ");
 		printDegrees(currentPos);
 
 		lcd->setCursor(0, 2);
-		lcd->print("Speed 100%");
+		lcd->print("Speed: 100%");
 
 		lcd->setCursor(0, 3);
-		lcd->print("Direction CCW");
+		lcd->print("Direction: N/A");
 	}
 
 	void setCalibratePosMode(uint16_t position)
@@ -106,8 +106,8 @@ public:
 			return;
 
 		targetPos = degrees;
-		
-		lcd->setCursor(8, 0);
+
+		lcd->setCursor(12, 0);
 		printDegrees(degrees);
 	}
 
@@ -116,30 +116,32 @@ public:
 		if(degrees == currentPos)
 			return;
 			
-		lcd->setCursor(8, 1);
+		lcd->setCursor(13, 1);
 		printDegrees(degrees);
 	}
 
 	void setSpeed(uint8_t speed)
 	{
-		lcd->setCursor(6, 2);
+		lcd->setCursor(7, 2);
 		
 		if(speed == Speed_Stop)
-			lcd->print("  0");
+			lcd->print("0%  ");
 		else if(speed == Speed_Half)
-			lcd->print(" 50");
+			lcd->print("50% ");
 		else
-			lcd->print("100");
+			lcd->print("100%");
 	}
 
 	void setDirection(uint8_t direction)
 	{
-		lcd->setCursor(10, 3);
+		lcd->setCursor(11, 3);
 		
 		if(direction == Direction_Decreasing)
 			lcd->print("CCW");
-		else
+		else if(direction == Direction_Increasing)
 			lcd->print("CW ");
+		else
+			lcd->print("N/A");
 	}
 };
 
