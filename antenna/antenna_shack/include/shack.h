@@ -23,7 +23,8 @@ class Shack
 
 	bool setTargetToCurrentOnNextRead = true;
 
-	bool moving = false;
+	uint8_t antennaState = Antenna_Stopped;
+	unsigned long positionStaticSince = 0;
 	uint8_t direction = Direction_Decreasing;
 	uint8_t speed = Speed_Stop;
 
@@ -92,7 +93,7 @@ class Shack
 		Serial.print(" to ");
 		Serial.println(targetAntennaPosition);
 
-		moving = true;
+		antennaState = Antenna_Travelling;
 	}
 
 	void runMode_handleKnob()
@@ -115,51 +116,61 @@ class Shack
 	{
 		readPosition();
 
-		if(!moving)
+		if(antennaState == Antenna_Stopped)
 			return;
 			
 		if(currentAntennaPosition == targetAntennaPosition)
 		{
-			stop();
-			moving = false;
+			if(antennaState == Antenna_Travelling)
+			{
+				positionStaticSince = millis();
+				antennaState = Antenna_Damping;
+				stop();
+				return;
+			}
+
+			if(positionStaticSince + 2000 <= millis())
+			{
+				antennaState = Antenna_Stopped;
+				positionStaticSince = 0;
+				stop();
+			}
+			
 			return;
 		}
 
-		// TODO: handle cyclical wrapping
-		direction = currentAntennaPosition > targetAntennaPosition ? Direction_Decreasing : Direction_Increasing;
-		speed = abs(currentAntennaPosition - targetAntennaPosition) <= HalfSpeedPositionThreshold ? Speed_Half : Speed_Full;
-		
-		if(direction == Direction_Increasing)
+		positionStaticSince = 0;
+
+		uint16_t distance;
+		if(currentAntennaPosition > targetAntennaPosition)
 		{
-			// if we're nearly there...
-			if(currentAntennaPosition >= targetAntennaPosition - HalfSpeedPositionThreshold)
-			{
-				speed = Speed_Half;
-			}
-			// if we've overshot...
-			else if(currentAntennaPosition > targetAntennaPosition)
-			{
-				direction = Direction_Decreasing;
-				speed = Speed_Half;
-			}
-			// else we're not there yet, so keep going
-		}
-		else 
-		{
-			// if we're nearly there...
-			if(currentAntennaPosition <= targetAntennaPosition + HalfSpeedPositionThreshold)
-			{
-				speed = Speed_Half;
-			}
-			// if we've overshot...
-			else if(currentAntennaPosition < targetAntennaPosition)
+			distance = currentAntennaPosition - targetAntennaPosition;
+			if(distance > 1800)
 			{
 				direction = Direction_Increasing;
-				speed = Speed_Half;
+				distance = 3600 - distance;
 			}
-			// else we're not there yet, so keep going
+			else
+			{
+				direction = Direction_Decreasing;
+			}
+		}
+		else
+		{
+			distance = targetAntennaPosition - currentAntennaPosition;
+			if(distance > 1800)
+			{
+				direction = Direction_Decreasing;
+				distance = 3600 - distance;
+			}
+			else
+			{
+				direction = Direction_Increasing;
+			}
 		}
 
+		speed = distance <= HalfSpeedPositionThreshold ? Speed_Half : Speed_Full;
+		
 		move(speed, direction);
 	}
 
