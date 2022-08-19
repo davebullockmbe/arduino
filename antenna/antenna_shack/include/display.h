@@ -60,11 +60,11 @@ public:
 		lcd->clear();
 
 		lcd->setCursor(0, 0);
-		lcd->print("Target pos: ");
+		lcd->print("Target Pos:  ");
 		printDegrees(targetPos);
 
 		lcd->setCursor(0, 1);
-		lcd->print("Current pos: ");
+		lcd->print("Current Pos: ");
 		printDegrees(currentPos);
 
 		lcd->setCursor(0, 2);
@@ -107,7 +107,7 @@ public:
 
 		targetPos = degrees;
 
-		lcd->setCursor(12, 0);
+		lcd->setCursor(13, 0);
 		printDegrees(degrees);
 	}
 
