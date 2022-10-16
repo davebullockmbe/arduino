@@ -3,6 +3,10 @@
 #ifndef Button_h
 #define Button_h
 
+#define ButtonEvent_None 0
+#define ButtonEvent_Pressed 1
+#define ButtonEvent_Released 2
+
 /**
  * Handles button presses and releases with debouncing.
  */
@@ -11,7 +15,7 @@ class Button {
 	int pin;
 	int mode;
 	unsigned long lastMillis = 0;
-	bool lastPressed = 0;
+	bool lastPressed = false;
 	bool isPressed = false;
 	bool read = true;
 
@@ -29,7 +33,7 @@ class Button {
 			this->lastPressed = pressed;
 			return;
 		}
-
+		
 		if (millis() > (this->lastMillis + 50))
 		{
 			if (pressed == this->isPressed)
@@ -57,32 +61,17 @@ public:
 
 	/**
 	 * Determines if the button has been pressed.
-	 * Calling this method will only return `true` once for each press.
-	 * This will return true if the button is pressed when this class was instantiated
+	 * Calling this method will only return `true` once for each press/release.
+	 * This will return pressed/released if the button is pressed/released when this class was instantiated
 	 */
-	bool pressed() {
+	uint8_t event() {
 		this->updateState();
 
 		if(this->read)
-			return false;
+			return ButtonEvent_None;
 
 		this->read = true;
-		return isPressed;
-	}
-
-	/**
-	 * Determines if the button has been released after being pressed.
-	 * Calling this method will only return `true` once for each release.
-	 * This will return true if the button is released when this class was instantiated
-	 */
-	bool released() {
-		this->updateState();
-		
-		if(this->read)
-			return false;
-
-		this->read = true;
-		return !isPressed;
+		return isPressed ? ButtonEvent_Pressed : ButtonEvent_Released;
 	}
 };
 

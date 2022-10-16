@@ -68,10 +68,7 @@ public:
 		printDegrees(currentPos);
 
 		lcd->setCursor(0, 2);
-		lcd->print("Speed: 100%");
-
-		lcd->setCursor(0, 3);
-		lcd->print("Direction: N/A");
+		lcd->print("Speed: 100% Dir: N/A");
 	}
 
 	void setCalibratePosMode(uint16_t position)
@@ -134,7 +131,7 @@ public:
 
 	void setDirection(uint8_t direction)
 	{
-		lcd->setCursor(11, 3);
+		lcd->setCursor(17, 2);
 		
 		if(direction == Direction_Decreasing)
 			lcd->print("CCW");
@@ -142,6 +139,20 @@ public:
 			lcd->print("CW ");
 		else
 			lcd->print("N/A");
+	}
+
+	void setMode(uint8_t mode)
+	{
+		lcd->setCursor(0, 3);
+		
+		if(mode == Antenna_Damping)
+			lcd->print("Stabilising Position");
+		else if(mode == Antenna_Maintaining)
+			lcd->print("Maintaining Position");
+		else if(mode == Antenna_Stopped)
+			lcd->print("Ready               ");
+		else
+			lcd->print("Moving Position     ");
 	}
 };
 

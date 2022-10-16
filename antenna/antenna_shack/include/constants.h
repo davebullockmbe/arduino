@@ -27,11 +27,10 @@
 
 #define Mode_Run 0
 #define Mode_Calibrate_Pos 1
-#define Mode_Calibrate_Min 2
-#define Mode_Calibrate_Max 3
 
 #define Antenna_Stopped 0
 #define Antenna_Travelling 1
 #define Antenna_Damping 2
+#define Antenna_Maintaining 3
 
 #endif

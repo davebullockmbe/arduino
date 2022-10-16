@@ -13,6 +13,9 @@ class Shack
 	RotaryEncoder* knob;
 	Button* menuButton;
 	Button* targetButton;
+	Button* nudgeCWButton;
+	Button* nudgeCCWButton;
+	Button* maintainPosButton;
 	Display* display;
 	AltSoftSerial* uart;
 
@@ -36,42 +39,26 @@ class Shack
 
 	uint8_t displayMode = Mode_Run;
 
+	bool maintainPosition = false;
+
 	void handleMenuButtonPress()
 	{
-		if(!menuButton->pressed())
+		if(menuButton->event() != ButtonEvent_Pressed)
 			return;
 		
-		// if(targetAntennaPosition != currentAntennaPosition)
-		// {
-		// 	Serial.print("Start moving from: ");
-		// 	Serial.print(currentAntennaPosition);
-		// 	Serial.print(" to ");
-		// 	Serial.println(targetAntennaPosition);
-
-		// 	moving = true;
-		// }
-		
-		// writes
 		if(displayMode == Mode_Calibrate_Pos)
 		{
-			Serial.print("Setting position calibration to ");
-			Serial.println(antennaPositionCalibration);
 			writeCalibrationPos();
 			setTargetToCurrentOnNextRead = true;
-		}
 
-		displayMode++;
-		if(displayMode > Mode_Calibrate_Max)
 			displayMode = Mode_Run;
-
-		if(displayMode == Mode_Run)
-		{
 			targetAntennaPosition = currentAntennaPosition;
-			display->setRunMode(targetAntennaPosition, currentAntennaPosition);
-		}
-		else if(displayMode == Mode_Calibrate_Pos)
+			display->setRunMode(targetAntennaPosition, currentAntennaPosition);	
+		} 
+		else if(displayMode == Mode_Run)
 		{
 			display->setCalibratePosMode(currentAntennaPosition);
+			displayMode = Mode_Calibrate_Pos;
 		}
 
 		// reset knob activity
@@ -79,10 +66,37 @@ class Shack
 		knobPosition = 0;
 	}
 
+	void handleMaintainPosButton()
+	{
+		uint8_t event = maintainPosButton->event();
+
+		if(event == ButtonEvent_Pressed)
+		{
+			this->maintainPosition = true;
+
+			if(antennaState == Antenna_Stopped)
+			{
+				targetAntennaPosition = currentAntennaPosition;
+				display->setTargetPosition(targetAntennaPosition);
+				antennaState = Antenna_Maintaining;
+				display->setMode(antennaState);
+			}
+		}
+		else if(event == ButtonEvent_Released)
+		{
+			this->maintainPosition = false;
+			
+			if(antennaState == Antenna_Maintaining)
+			{
+				antennaState = Antenna_Stopped;
+				display->setMode(antennaState);
+			}
+		}
+	}
 
 	void runMode_handleTargetButtonPress()
 	{
-		if(!targetButton->pressed())
+		if(targetButton->event() != ButtonEvent_Pressed)
 			return;
 		
 		if(targetAntennaPosition == currentAntennaPosition)
@@ -94,11 +108,39 @@ class Shack
 		Serial.println(targetAntennaPosition);
 
 		antennaState = Antenna_Travelling;
+		display->setMode(antennaState);
+	}
+
+	void runMode_handleNudgeButtonPress()
+	{
+		if(antennaState != Antenna_Stopped && antennaState != Antenna_Maintaining)
+			return;
+
+		if(nudgeCWButton->event() == ButtonEvent_Pressed)
+			this->targetAntennaPosition = cycle360(currentAntennaPosition + 5);
+		else if(nudgeCCWButton->event() == ButtonEvent_Pressed)
+			this->targetAntennaPosition = cycle360(currentAntennaPosition - 5);
+		else
+			return;
+		
+		Serial.print("Start moving from: ");
+		Serial.print(currentAntennaPosition);
+		Serial.print(" to ");
+		Serial.println(targetAntennaPosition);
+
+		display->setTargetPosition(targetAntennaPosition);
+
+		antennaState = Antenna_Travelling;
+		display->setMode(antennaState);
 	}
 
 	void runMode_handleKnob()
 	{
 		knob->tick();
+
+		if(antennaState != Antenna_Stopped)
+			return;
+
 		int16_t newPos = knob->getPosition();
 		
 		if(knobPosition == newPos)
@@ -107,7 +149,7 @@ class Shack
 		int diff = newPos - knobPosition;
 		knobPosition = newPos;
 
-		targetAntennaPosition = cycle360(targetAntennaPosition + (diff * 10)); //5)); // TODO put back to .5 degree
+		targetAntennaPosition = cycle360(targetAntennaPosition + (diff * 5));
 
 		display->setTargetPosition(targetAntennaPosition);
 	}
@@ -125,18 +167,26 @@ class Shack
 			{
 				positionStaticSince = millis();
 				antennaState = Antenna_Damping;
+				display->setMode(antennaState);
 				stop();
 				return;
 			}
 
-			if(positionStaticSince + 2000 <= millis())
+			if(antennaState == Antenna_Damping && positionStaticSince + 2000 <= millis())
 			{
-				antennaState = Antenna_Stopped;
+				antennaState = maintainPosition ? Antenna_Maintaining : Antenna_Stopped;
+				display->setMode(antennaState);
 				positionStaticSince = 0;
 				stop();
 			}
 			
 			return;
+		}
+
+		if(antennaState == Antenna_Maintaining)
+		{
+			antennaState = Antenna_Travelling;
+			display->setMode(antennaState);
 		}
 
 		positionStaticSince = 0;
@@ -231,11 +281,6 @@ class Shack
 
 	void move(uint8_t speed, uint8_t direction)
 	{
-		//Serial.print("Move: ");
-		//Serial.print(speed);
-		//Serial.print(" ");
-		//Serial.println(direction);
-
 		digitalWrite(directionPin, direction);
 
 		if(speed == Speed_Stop)
@@ -310,7 +355,7 @@ class Shack
 	}
 
 public:
-	Shack(AltSoftSerial* uart, uint8_t encoderPin1, uint8_t encoderPin2, uint8_t encoderButtonPin, uint8_t directionPin, uint8_t runPin, uint8_t halfSpeedPin, uint8_t targetButtonPin)
+	Shack(AltSoftSerial* uart, uint8_t encoderPin1, uint8_t encoderPin2, uint8_t encoderButtonPin, uint8_t directionPin, uint8_t runPin, uint8_t halfSpeedPin, uint8_t targetButtonPin, uint8_t nudgeCWButtonPin, uint8_t nudgeCCWButtonPin, uint8_t maintainPosButtonPin)
 	{
 		EEPROM.begin();
 
@@ -326,6 +371,9 @@ public:
 		this->knob = new RotaryEncoder(encoderPin1, encoderPin2, RotaryEncoder::LatchMode::FOUR3);
 		this->menuButton = new Button(encoderButtonPin, INPUT_PULLUP);
 		this->targetButton = new Button(targetButtonPin, INPUT_PULLUP);
+		this->nudgeCWButton = new Button(nudgeCWButtonPin, INPUT_PULLUP);
+		this->nudgeCCWButton = new Button(nudgeCCWButtonPin, INPUT_PULLUP);
+		this->maintainPosButton = new Button(maintainPosButtonPin, INPUT_PULLUP);
 
 		this->directionPin = directionPin;
 		this->runPin = runPin;
@@ -341,10 +389,12 @@ public:
 	void loop()
 	{
 		handleMenuButtonPress();
+		handleMaintainPosButton();
 
 		if(displayMode == Mode_Run)
 		{
 			runMode_handleTargetButtonPress();
+			runMode_handleNudgeButtonPress();
 			runMode_setAntennaPosition();
 			runMode_handleKnob();
 			return;

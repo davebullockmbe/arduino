@@ -12,6 +12,9 @@
 #define HalfSpeed_Pin A2
 
 #define TargetButtonPin A3
+#define NudgeCWButtonPin 10
+#define NudgeCCWButtonPin 11
+#define MaintainPosButtonPin 12
 
 
 Shack* shack;
@@ -22,7 +25,7 @@ void setup()
 	Serial.begin(9600);
 	uart.begin(9600);
 
-	shack = new Shack(&uart, RotaryEncoder_Pin1, RotaryEncoder_Pin2, RotaryEncoder_ButtonPin, Direction_Pin, Run_Pin, HalfSpeed_Pin, TargetButtonPin);
+	shack = new Shack(&uart, RotaryEncoder_Pin1, RotaryEncoder_Pin2, RotaryEncoder_ButtonPin, Direction_Pin, Run_Pin, HalfSpeed_Pin, TargetButtonPin, NudgeCWButtonPin, NudgeCCWButtonPin, MaintainPosButtonPin);
 }
 
 void loop() 

@@ -21,7 +21,7 @@ void setup()
 {
 	Serial.begin(115200);
 
-	lcd.begin(20, 4);
+	lcd.begin(40, 2);
 
 	lcd.clear();
 	lcd.print("Initialising...");
@@ -51,7 +51,6 @@ void setup()
 
 void loop() // run over and over again
 {
-	// read data from the GPS in the 'main loop'
 	char c = GPS.read();
 	if(c)
 		Serial.print(c);
@@ -67,17 +66,19 @@ void loop() // run over and over again
 	}
 
  	// approximately every 2 seconds or so, print out the current stats
-	if (millis() - timer <= 2000)
+	if (millis() - timer <= 1000)
 		return;
   
 	timer = millis(); // reset the timer
 	
 	// Line 0
 	
+	// time
 	lcd.setCursor(0, 0);
-
-	if(GPS.satellites > 0)
+	if(GPS.satellites > 0 || GPS.fix)
  	{	
+		lcd.print("GMT ");
+
 		if (GPS.hour < 10)
 			lcd.print('0');
 		lcd.print(GPS.hour, DEC);
@@ -89,15 +90,18 @@ void loop() // run over and over again
 		if (GPS.seconds < 10)
 			lcd.print('0');
 		lcd.print(GPS.seconds, DEC);
-		lcd.print("   Sats: ");
+		lcd.print("  ");
 	}
 	else
 	{
-		lcd.print("           Sats: ");
+		lcd.print("              ");
 	}
 	
+
+	// satellites
+	lcd.setCursor(32, 0);
+	lcd.print("Sats ");
 	lcd.print(GPS.satellites);
-	
 	// trailing whitespace
 	if(GPS.satellites < 100)
 		lcd.print(" ");
@@ -114,39 +118,36 @@ void loop() // run over and over again
 	{
 		if(!prevFix)
 		{
-			lcd.clear();
 			prevFix = true;
 		}
 
+		// position
+		lcd.setCursor(0, 1);
+		lcd.print("Pos ");
 		lcd.print(GPS.latitudeDegrees, 5);
-		lcd.print(", ");
+		lcd.print(' ');
 		lcd.print(GPS.longitudeDegrees, 5);
 
-		char* maidenhead = get_mh(GPS.latitudeDegrees, GPS.longitudeDegrees, 6);
-		
-		// Line 2
-		
-		lcd.setCursor(0, 2);
-		lcd.print("Alt: ");
+
+		// altitude
+		lcd.setCursor(14, 0);
+		lcd.print("Altitude ");
 		lcd.print(GPS.altitude);
 		lcd.print("m");
 
-		// Line 3
-
-		lcd.setCursor(0, 3);
-		lcd.print("Maidenhead: ");
+		// maidenhead
+		char* maidenhead = get_mh(GPS.latitudeDegrees, GPS.longitudeDegrees, 6);
+		lcd.setCursor(23, 1);
+		lcd.print("Maidenhead ");
 		lcd.print(maidenhead);
-		lcd.print("  ");
 	}
 	else 
 	{
 		if(prevFix)
 			prevFix = false;
 		
-		lcd.print("GPS frequency source");
-		lcd.setCursor(0, 2);
-		lcd.print("unavailable.        ");
-		lcd.setCursor(0, 3);
+		lcd.clear();
+		lcd.setCursor(1, 0);
 		lcd.print("No satellite fix.   ");
 	}
 }
