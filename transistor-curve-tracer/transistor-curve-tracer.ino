@@ -1260,7 +1260,7 @@ void DrawMenuScreen(void) {
   DrawBox(SetupLeft + 1, SetupTop + 1, SetupWidth - 2, SetupHeight - 2, TFT_DARKGREY);
   DrawStringAt(SetupLeft + 4, SetupTop + 19, "SETUP", LargeFont, TFT_BLACK);
 
-  DrawStringAt(4,  15, "Bat ", LargeFont, RGB(128, 128, 255));
+  DrawStringAt(4,  15, "USB ", LargeFont, RGB(128, 128, 255));
   DrawDecimal(BattVolts(), LargeFont, RGB(128, 128, 255));
 }
 

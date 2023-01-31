@@ -1,7 +1,7 @@
 {
     "board": "arduino:avr:pro",
     "path": "C:/Program Files (x86)/Arduino",
-    "port": "COM8",
+    "port": "COM5",
     "sketch": "transistor-curve-tracer.ino",
     "configuration": "cpu=16MHzatmega328"
 }
