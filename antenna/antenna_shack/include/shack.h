@@ -117,12 +117,21 @@ class Shack
 			return;
 
 		if(nudgeCWButton->event() == ButtonEvent_Pressed)
+		{
 			this->targetAntennaPosition = cycle360(currentAntennaPosition + 5);
+			Serial.println("Nudge CW");
+		}
 		else if(nudgeCCWButton->event() == ButtonEvent_Pressed)
-			this->targetAntennaPosition = cycle360(currentAntennaPosition - 5);
+		{
+			int16_t newPos = currentAntennaPosition - 5;
+			this->targetAntennaPosition = cycle360(newPos);
+			Serial.println("Nudge CCW");
+		}
 		else
+		{
 			return;
-		
+		}
+
 		Serial.print("Start moving from: ");
 		Serial.print(currentAntennaPosition);
 		Serial.print(" to ");
