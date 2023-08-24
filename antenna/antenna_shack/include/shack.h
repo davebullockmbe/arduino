@@ -159,12 +159,19 @@ class Shack
 		readPosition();
 
 		if(antennaState == Antenna_Stopped)
+		{
 			return;
+		}
 			
 		if(currentAntennaPosition == targetAntennaPosition)
 		{
+			
+			Serial.print("Reached target: ");
+			Serial.println(targetAntennaPosition);
+
 			if(antennaState == Antenna_Travelling)
 			{
+				Serial.println("	Entering damping mode...");
 				positionStaticSince = millis();
 				antennaState = Antenna_Damping;
 				display->setMode(antennaState);
@@ -174,6 +181,7 @@ class Shack
 
 			if(antennaState == Antenna_Damping && positionStaticSince + 2000 <= millis())
 			{
+				Serial.println("	Been static for 2s, stopping");
 				antennaState = maintainPosition ? Antenna_Maintaining : Antenna_Stopped;
 				display->setMode(antennaState);
 				positionStaticSince = 0;
@@ -227,9 +235,10 @@ class Shack
 	void updateAntennaPosition(uint16_t position)
 	{
 		uint16_t degrees = map(position, 0, 16384, 0, 3600);
+
 		// round to nearest 0.5 (value is * 10)
 		degrees -= degrees % 5;
-		
+
 		currentAntennaPosition = cycle360(degrees + antennaPositionCalibration);
 
 		if(displayMode == Mode_Run)
@@ -324,8 +333,8 @@ class Shack
 			uint16_t position = uart->read() << 8;
 			position |= uart->read();
 
-			//Serial.print("Position: ");
-			//Serial.println(position);
+			// Serial.print("Position: ");
+			// Serial.println(position);
 
 			if(uart->read() != Message_End)
 			{

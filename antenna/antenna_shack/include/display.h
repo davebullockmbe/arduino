@@ -113,6 +113,8 @@ public:
 		if(degrees == currentPos)
 			return;
 			
+		currentPos = degrees;
+		
 		lcd->setCursor(13, 1);
 		printDegrees(degrees);
 	}
