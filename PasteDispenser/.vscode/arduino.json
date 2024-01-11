@@ -1,0 +1,7 @@
+{
+    "configuration": "cpu=8MHzatmega328",
+    "board": "arduino:avr:pro",
+    "programmer": "avrisp",
+    "port": "COM5",
+    "sketch": "PasteDispenser.ino"
+}
