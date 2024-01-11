@@ -214,11 +214,9 @@ typedef enum REFLOW_PROFILE
 #define PID_KD_REFLOW 350
 #define PID_SAMPLE_TIME 1000
 
-#if VERSION == 2
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define X_AXIS_START 18 // X-axis starting position
-#endif
 
 // ***** LCD MESSAGES *****
 const char* lcdMessagesReflowStatus[] = {
@@ -515,11 +513,11 @@ void loop()
 				}
 			}
 		}
-		
+
 		unsigned char timeAxis;
 		for (timeAxis = 0; timeAxis < x; timeAxis++)
 			oled.drawPixel(timeAxis + X_AXIS_START, temperature[timeAxis], WHITE);
-
+	
 		// Update screen
 		oled.display();
 	}
