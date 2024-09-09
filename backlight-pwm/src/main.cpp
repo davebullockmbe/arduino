@@ -1,13 +1,14 @@
 #include <Arduino.h>
 
-#define V_IN_MIN 400
+// 1203 * 1v / 3.3v
+#define V_IN_MIN 310
 #define V_IN_MAX 1023
 
 #define PWM_OUT_MIN 0
 #define PWM_OUT_MAX 255
 
 // https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
-#define OUTPUT_PIN 2
+#define OUTPUT_PIN 1
 
 void setup()
 {
