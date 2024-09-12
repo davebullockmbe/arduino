@@ -286,7 +286,7 @@ unsigned char fault;
 
 unsigned int timerUpdate;
 unsigned char temperature[SCREEN_WIDTH - X_AXIS_START];
-unsigned char x;
+unsigned char x = 0;
 
 
 // PID control interface
@@ -309,6 +309,10 @@ switch_t readSwitch(void)
 
 void setup()
 {
+	// Serial communication at 115200 bps
+	Serial.begin(115200);
+	Serial.println(F("test"));
+
 	// Check current selected reflow profile
 	unsigned char value = EEPROM.read(PROFILE_TYPE_ADDRESS);
 	if ((value == 0) || (value == 1))
@@ -354,8 +358,6 @@ void setup()
 	delay(2000);
 	oled.clearDisplay();
 
-	// Serial communication at 115200 bps
-	Serial.begin(115200);
 
 	// Turn off LED (active high)
 	digitalWrite(ledPin, LOW);
@@ -411,11 +413,11 @@ void loop()
 			(fault & MAX31856_FAULT_OVUV) ||
 			(fault & MAX31856_FAULT_OPEN))
 		{
-		// Illegal operation
-		reflowState = REFLOW_STATE_ERROR;
-		reflowStatus = REFLOW_STATUS_OFF;
-		beep();
-		Serial.println(F("Error"));
+			// Illegal operation
+			reflowState = REFLOW_STATE_ERROR;
+			reflowStatus = REFLOW_STATUS_OFF;
+			beep();
+			Serial.println(F("Error"));
 		}
 	}
 
@@ -515,13 +517,14 @@ void loop()
 				}
 			}
 		}
-		
+
 		unsigned char timeAxis;
 		for (timeAxis = 0; timeAxis < x; timeAxis++)
 			oled.drawPixel(timeAxis + X_AXIS_START, temperature[timeAxis], WHITE);
-
+		
 		// Update screen
 		oled.display();
+
 	}
 
 	// Reflow oven controller state machine
