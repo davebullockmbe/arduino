@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
 // 1203 * 1v / 3.3v
-#define V_IN_MIN 310
-#define V_IN_MAX 1023
+#define V_IN_MIN 143 // 0.7V
+#define V_IN_MAX 962 // 4.7V
 
 #define PWM_OUT_MIN 0
 #define PWM_OUT_MAX 255
