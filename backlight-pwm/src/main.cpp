@@ -6,7 +6,7 @@
 #define PWM_OUT_MIN 0
 #define PWM_OUT_MAX 255
 
-// https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
+// https://europe1.discourse-cdn.com/arduino/original/4X/7/9/2/792251f6b79970904de17bc51383f200771bc306.png
 #define OUTPUT_PIN PB1
 #define INPUT_PIN PB2
 
