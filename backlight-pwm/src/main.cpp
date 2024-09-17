@@ -1,6 +1,5 @@
 #include <Arduino.h>
 
-// 1203 * 1v / 3.3v
 #define V_IN_MIN 143 // 0.7V
 #define V_IN_MAX 962 // 4.7V
 
