@@ -12,6 +12,7 @@
 
 void setup()
 {
+	pinMode(INPUT_PIN, INPUT);
 	pinMode(OUTPUT_PIN, OUTPUT);
 }
 
