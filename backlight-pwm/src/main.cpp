@@ -7,8 +7,8 @@
 #define PWM_OUT_MAX 255
 
 // https://europe1.discourse-cdn.com/arduino/original/4X/7/9/2/792251f6b79970904de17bc51383f200771bc306.png
-#define OUTPUT_PIN PB1
-#define INPUT_PIN PB2
+#define OUTPUT_PIN PB1 // MISO
+#define INPUT_PIN PB2 // SCLK
 
 void setup()
 {
