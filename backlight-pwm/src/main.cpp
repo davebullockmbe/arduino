@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#define V_IN_MIN 143 // 0.7V
-#define V_IN_MAX 962 // 4.7V
+#define V_IN_MIN 50 // 0.24V
+#define V_IN_MAX 1023 // 5.0V
 
 #define PWM_OUT_MIN 0
 #define PWM_OUT_MAX 255
